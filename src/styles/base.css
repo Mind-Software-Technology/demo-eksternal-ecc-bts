@@ -1,0 +1,357 @@
+/* ===========================================================================
+   BASE — design tokens, reset, typography, utilities, shared primitives
+   =========================================================================== */
+
+:root {
+  /* ---- Brand palette (derived from the ECC-BTS poster) ---- */
+  --navy-950: #04173f;
+  --navy-900: #06205c;
+  --navy-800: #0a2c6b;
+  --blue-700: #0b3aa0;
+  --blue-600: #1450c4;
+  --blue-500: #1e6bd6;
+  --blue-400: #3b82f6;
+  --blue-300: #7cb0f7;
+  --red: #e11d2a;
+  --red-600: #c81523;
+  --orange: #f7941d;
+  --orange-400: #ffab3d;
+  --green: #16a34a;
+  --green-400: #22c55e;
+  --cyan: #06b6d4;
+  --indigo: #4f46e5;
+
+  /* ---- Neutrals ---- */
+  --ink: #0d1b3e;
+  --ink-soft: #33415c;
+  --muted: #61708c;
+  --line: #e6ecf6;
+  --bg: #ffffff;
+  --soft: #f3f7fd;
+  --soft-2: #eaf1fb;
+
+  /* ---- Gradients ---- */
+  --g-hero: radial-gradient(1200px 600px at 80% -10%, #1e6bd6 0%, transparent 55%),
+    radial-gradient(900px 500px at 0% 0%, #0b3aa0 0%, transparent 50%),
+    linear-gradient(160deg, var(--navy-950), var(--navy-900) 55%, var(--blue-700));
+  --g-brand: linear-gradient(135deg, var(--blue-600), var(--blue-400));
+  --g-accent: linear-gradient(135deg, var(--orange), var(--red));
+  --g-text: linear-gradient(120deg, var(--orange-400), var(--red));
+
+  /* ---- Accent registry (per-card colors) ---- */
+  --acc-blue: linear-gradient(135deg, #1e6bd6, #3b82f6);
+  --acc-green: linear-gradient(135deg, #15a34a, #34d399);
+  --acc-indigo: linear-gradient(135deg, #4f46e5, #7c8cff);
+  --acc-orange: linear-gradient(135deg, #f7941d, #ff6a3d);
+  --acc-cyan: linear-gradient(135deg, #0891b2, #22d3ee);
+  --acc-red: linear-gradient(135deg, #e11d2a, #ff5a5f);
+
+  /* ---- Radii / shadows ---- */
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 30px;
+  --r-pill: 999px;
+  --shadow-sm: 0 6px 18px -8px rgba(9, 30, 76, 0.25);
+  --shadow-card: 0 22px 50px -24px rgba(9, 30, 76, 0.45);
+  --shadow-glow: 0 16px 40px -12px rgba(30, 107, 214, 0.55);
+
+  /* ---- Typography ---- */
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --font-display: 'Sora', var(--font-sans);
+
+  /* ---- Layout ---- */
+  --container: 1180px;
+  --nav-h: 76px;
+}
+
+/* ---------------------------------------------------------------- reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+* {
+  margin: 0;
+}
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--nav-h) + 12px);
+}
+body {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+ul {
+  list-style: none;
+  padding: 0;
+}
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+:focus-visible {
+  outline: 3px solid var(--blue-400);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------------------------------------------------------------- type */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  line-height: 1.1;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+h1 {
+  font-size: clamp(2.1rem, 1.3rem + 3.6vw, 3.7rem);
+  font-weight: 800;
+}
+h2 {
+  font-size: clamp(1.7rem, 1.2rem + 2vw, 2.6rem);
+  font-weight: 800;
+}
+h3 {
+  font-size: clamp(1.15rem, 1rem + 0.6vw, 1.4rem);
+  font-weight: 700;
+}
+p {
+  color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------------- utils */
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: clamp(1.1rem, 0.5rem + 2vw, 2rem);
+}
+.section {
+  padding-block: clamp(3.5rem, 2rem + 6vw, 6.5rem);
+}
+.section--soft {
+  background: var(--soft);
+}
+.section--dark {
+  background: var(--g-hero);
+  color: #eaf1ff;
+}
+.text-grad {
+  background: var(--g-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-blue-grad {
+  background: var(--g-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.center {
+  text-align: center;
+}
+.muted {
+  color: var(--muted);
+}
+.lead {
+  font-size: clamp(1rem, 0.95rem + 0.4vw, 1.18rem);
+  color: var(--ink-soft);
+}
+
+/* ---- eyebrow / pill label ---- */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue-600);
+  background: var(--soft-2);
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--r-pill);
+}
+.section--dark .eyebrow {
+  color: #cfe0ff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.98rem;
+  padding: 0.85rem 1.5rem;
+  border-radius: var(--r-pill);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease,
+    color 0.25s ease;
+  white-space: nowrap;
+}
+.btn svg {
+  font-size: 1.1em;
+}
+.btn:hover {
+  transform: translateY(-2px);
+}
+.btn--primary {
+  background: var(--g-accent);
+  color: #fff;
+  box-shadow: 0 14px 30px -12px rgba(225, 29, 42, 0.7);
+}
+.btn--primary:hover {
+  box-shadow: 0 18px 38px -10px rgba(225, 29, 42, 0.8);
+}
+.btn--blue {
+  background: var(--g-brand);
+  color: #fff;
+  box-shadow: var(--shadow-glow);
+}
+.btn--wa {
+  background: linear-gradient(135deg, #1faa54, #25d366);
+  color: #fff;
+  box-shadow: 0 14px 30px -12px rgba(37, 211, 102, 0.7);
+}
+.btn--ghost {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(6px);
+}
+.btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.btn--outline {
+  background: #fff;
+  color: var(--blue-700);
+  border: 1.5px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+.btn--outline:hover {
+  border-color: var(--blue-400);
+  color: var(--blue-600);
+}
+.btn--lg {
+  padding: 1rem 1.9rem;
+  font-size: 1.05rem;
+}
+.btn--block {
+  width: 100%;
+}
+
+/* ---- generic card ---- */
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---- accent helper: sets --accent gradient from a name ---- */
+[data-accent='blue'] {
+  --accent: var(--acc-blue);
+}
+[data-accent='green'] {
+  --accent: var(--acc-green);
+}
+[data-accent='indigo'] {
+  --accent: var(--acc-indigo);
+}
+[data-accent='orange'] {
+  --accent: var(--acc-orange);
+}
+[data-accent='cyan'] {
+  --accent: var(--acc-cyan);
+}
+[data-accent='red'] {
+  --accent: var(--acc-red);
+}
+
+/* ---- section heading block ---- */
+.heading {
+  max-width: 720px;
+}
+.heading--center {
+  margin-inline: auto;
+  text-align: center;
+}
+.heading p {
+  margin-top: 0.9rem;
+}
+
+/* ---- decorative animated blobs ---- */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-26px);
+  }
+}
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ---------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
