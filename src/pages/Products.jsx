@@ -1,23 +1,44 @@
-import { useState } from 'react'
-import { FiCheck } from 'react-icons/fi'
-import { FaWhatsapp } from 'react-icons/fa6'
+import { Link, useSearchParams } from 'react-router-dom'
+import { FiShoppingCart, FiX } from 'react-icons/fi'
 import Page from '../components/layout/Page'
 import PageHero from '../components/sections/PageHero'
 import CTABand from '../components/sections/CTABand'
-import Reveal from '../components/ui/Reveal'
+import { RevealGroup, RevealItem } from '../components/ui/Reveal'
+import Rating from '../components/ui/Rating'
 import { services } from '../data/services'
 import { categories } from '../data/categories'
-import { Icon } from '../data/icons'
-import { waLink } from '../data/site'
+import { formatIDR } from '../data/format'
+import { useCart } from '../context/cart'
 
 const filters = [{ id: 'all', title: 'Semua' }, ...categories]
 
 export default function Products() {
-  const [active, setActive] = useState('all')
-  const list =
-    active === 'all'
-      ? services
-      : services.filter((s) => s.categoryId === active)
+  const [params, setParams] = useSearchParams()
+  const { addItem } = useCart()
+
+  const active = params.get('cat') || 'all'
+  const query = (params.get('q') || '').trim()
+  const q = query.toLowerCase()
+
+  const setActive = (id) => {
+    const next = {}
+    if (id !== 'all') next.cat = id
+    if (query) next.q = query
+    setParams(next, { replace: true })
+  }
+
+  const clearSearch = () => {
+    const next = {}
+    if (active !== 'all') next.cat = active
+    setParams(next, { replace: true })
+  }
+
+  let list = active === 'all' ? services : services.filter((s) => s.categoryId === active)
+  if (q) {
+    list = list.filter((s) =>
+      `${s.title} ${s.tagline} ${s.description}`.toLowerCase().includes(q),
+    )
+  }
 
   return (
     <Page title="Produk & Layanan — ECC-BTS">
@@ -27,7 +48,7 @@ export default function Products() {
         subtitle="Layanan lengkap untuk mendukung karya ilmiah Anda — dipilih sesuai kebutuhan, dikerjakan oleh tim ahli."
       />
 
-      <section className="section">
+      <section className="section section--soft">
         <div className="container">
           {/* Category filter */}
           <div className="filter-tabs" role="tablist" aria-label="Filter kategori">
@@ -45,41 +66,80 @@ export default function Products() {
             ))}
           </div>
 
-          {/* Detailed product rows */}
-          <div>
-            {list.map((s) => (
-              <Reveal className="product-row" key={s.id} data-accent={s.accent}>
-                <div className="product-row__visual">
-                  <span className="pv-num" aria-hidden="true">
-                    {s.number}
-                  </span>
-                  <span className="pv-icon">
-                    <Icon name={s.icon} />
-                  </span>
-                </div>
-                <div className="product-row__body">
-                  <span className="product-row__tag">{s.tagline}</span>
-                  <h2>{s.title}</h2>
-                  <p>{s.description}</p>
-                  <ul className="product-row__points">
-                    {s.points.map((p) => (
-                      <li key={p}>
-                        <FiCheck /> {p}
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    href={waLink(`Halo ECC-BTS, saya tertarik dengan ${s.title}.`)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn--wa product-row__cta"
-                  >
-                    <FaWhatsapp /> Pesan Layanan Ini
-                  </a>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          {/* Active search note */}
+          {query && (
+            <div className="search-note">
+              <span>
+                Menampilkan {list.length} hasil untuk “<b>{query}</b>”
+              </span>
+              <button type="button" onClick={clearSearch}>
+                <FiX /> Hapus pencarian
+              </button>
+            </div>
+          )}
+
+          {/* Product cards */}
+          {list.length === 0 ? (
+            <p className="empty-note">
+              Tidak ada layanan yang cocok. Coba kata kunci atau kategori lain.
+            </p>
+          ) : (
+            <RevealGroup className="grid-products">
+              {list.map((s) => (
+                <RevealItem key={s.id}>
+                  <article className="product-card" data-accent={s.accent}>
+                    <Link
+                      to={`/produk/${s.id}`}
+                      className="product-card__media"
+                      aria-label={`Lihat detail ${s.title}`}
+                    >
+                      {s.badge && (
+                        <span
+                          className={`product-card__badge ${
+                            s.badge === 'Baru' ? 'is-new' : ''
+                          }`}
+                        >
+                          {s.badge}
+                        </span>
+                      )}
+                      <img
+                        className="pv-photo"
+                        src={s.image}
+                        alt={s.imageAlt || s.title}
+                        loading="lazy"
+                      />
+                    </Link>
+                    <div className="product-card__body">
+                      <h3>
+                        <Link to={`/produk/${s.id}`}>{s.title}</Link>
+                      </h3>
+                      <p className="product-card__desc">{s.tagline}</p>
+                      <Rating value={s.rating} reviews={s.reviews} />
+                      <div className="product-card__foot">
+                        <span className="price-tag">{formatIDR(s.price)}</span>
+                        <div className="product-card__actions">
+                          <Link
+                            to={`/produk/${s.id}`}
+                            className="btn btn--outline btn--sm"
+                          >
+                            Detail
+                          </Link>
+                          <button
+                            type="button"
+                            className="btn btn--blue btn--sm"
+                            aria-label={`Tambah ${s.title} ke keranjang`}
+                            onClick={() => addItem(s.id)}
+                          >
+                            <FiShoppingCart /> Keranjang
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                </RevealItem>
+              ))}
+            </RevealGroup>
+          )}
         </div>
       </section>
 

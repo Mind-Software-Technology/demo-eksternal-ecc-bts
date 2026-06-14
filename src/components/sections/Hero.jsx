@@ -1,35 +1,38 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { FiCheckCircle, FiArrowRight } from 'react-icons/fi'
-import { FaWhatsapp } from 'react-icons/fa6'
-import { site, waLink } from '../../data/site'
-import { services } from '../../data/services'
-import { Icon } from '../../data/icons'
+import { FiSearch, FiCheckCircle, FiStar } from 'react-icons/fi'
+import { categories } from '../../data/categories'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 26 },
   show: (i = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] },
   }),
 }
 
 export default function Hero() {
-  const featured = services.slice(0, 3)
+  const [q, setQ] = useState('')
+  const navigate = useNavigate()
+
+  const onSearch = (e) => {
+    e.preventDefault()
+    const term = q.trim()
+    navigate(term ? `/produk?q=${encodeURIComponent(term)}` : '/produk')
+  }
 
   return (
     <section className="hero">
       <div className="hero__bg" aria-hidden="true">
         <span className="blob b1" />
         <span className="blob b2" />
-        <span className="blob b3" />
       </div>
-      <div className="hero__grid-overlay" aria-hidden="true" />
 
       <div className="container hero__inner">
         {/* Copy */}
-        <div>
+        <div className="hero__copy">
           <motion.span
             className="eyebrow"
             variants={fadeUp}
@@ -46,8 +49,8 @@ export default function Hero() {
             animate="show"
             custom={1}
           >
-            Solusi Tepat untuk{' '}
-            <span className="text-grad">Karya Ilmiah Berkualitas</span>
+            Temukan Layanan untuk{' '}
+            <span className="text-grad">Karya Ilmiah Anda</span>
           </motion.h1>
 
           <motion.p
@@ -58,42 +61,44 @@ export default function Hero() {
             custom={2}
           >
             Dari cek similarity, olah data, hingga publikasi dan penerbitan buku —
-            kami dampingi karya ilmiah Anda dengan profesional, cepat, dan
-            terpercaya.
+            semua layanan dalam satu tempat, dikerjakan tim ahli yang profesional
+            dan terpercaya.
           </motion.p>
 
-          <motion.div
-            className="hero__values"
+          <motion.form
+            className="hero__search"
+            onSubmit={onSearch}
             variants={fadeUp}
             initial="hidden"
             animate="show"
             custom={3}
           >
-            {site.valueWords.map((w) => (
-              <span className="hero__value" key={w}>
-                <FiCheckCircle /> {w}
-              </span>
-            ))}
-          </motion.div>
+            <FiSearch className="hero__search-ic" aria-hidden="true" />
+            <input
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Cari layanan… mis. Turnitin, publikasi, statistik"
+              aria-label="Cari layanan"
+            />
+            <button type="submit" className="btn btn--blue">
+              Cari
+            </button>
+          </motion.form>
 
           <motion.div
-            className="hero__actions"
+            className="hero__chips"
             variants={fadeUp}
             initial="hidden"
             animate="show"
             custom={4}
           >
-            <a
-              href={waLink()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn--wa btn--lg"
-            >
-              <FaWhatsapp /> Konsultasi Gratis
-            </a>
-            <Link to="/produk" className="btn btn--ghost btn--lg">
-              Lihat Layanan <FiArrowRight />
-            </Link>
+            <span className="hero__chips-label">Populer:</span>
+            {categories.map((c) => (
+              <Link key={c.id} to={`/produk?cat=${c.id}`} className="hero__chip">
+                {c.title}
+              </Link>
+            ))}
           </motion.div>
 
           <motion.div
@@ -121,29 +126,37 @@ export default function Hero() {
         {/* Visual */}
         <motion.div
           className="hero__visual"
-          initial={{ opacity: 0, scale: 0.92, y: 30 }}
+          initial={{ opacity: 0, scale: 0.94, y: 30 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="hero-card">
-            <div className="hero-badge">
-              <FiCheckCircle />
-              <span>
-                100%
-                <small>Komitmen Kualitas</small>
-              </span>
-            </div>
-            {featured.map((s) => (
-              <div className="hero-card__row" key={s.id} data-accent={s.accent}>
-                <span className="hero-card__ic">
-                  <Icon name={s.icon} />
-                </span>
-                <div>
-                  <b>{s.title.replace('Jasa ', '')}</b>
-                  <p>{s.tagline}</p>
-                </div>
-              </div>
-            ))}
+          <div className="hero__media">
+            <img
+              src="/images/publikasi-artikel-ilmiah.jpg"
+              alt="Naskah karya ilmiah yang sedang dikerjakan tim ECC-BTS"
+            />
+          </div>
+
+          <div className="hero__media-badge hero__media-badge--rating">
+            <span className="hero__rating-stars" aria-hidden="true">
+              <FiStar />
+              <FiStar />
+              <FiStar />
+              <FiStar />
+              <FiStar />
+            </span>
+            <span>
+              4,9 / 5
+              <small>Rating klien</small>
+            </span>
+          </div>
+
+          <div className="hero__media-badge hero__media-badge--quality">
+            <FiCheckCircle />
+            <span>
+              100%
+              <small>Komitmen Kualitas</small>
+            </span>
           </div>
         </motion.div>
       </div>

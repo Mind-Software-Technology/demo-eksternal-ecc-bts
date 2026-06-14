@@ -1,6 +1,7 @@
 import Page from '../components/layout/Page'
 import Hero from '../components/sections/Hero'
 import Marquee from '../components/sections/Marquee'
+import CategoryBar from '../components/sections/CategoryBar'
 import ServicesGrid from '../components/sections/ServicesGrid'
 import WhyChooseUs from '../components/sections/WhyChooseUs'
 import StatsBand from '../components/sections/StatsBand'
@@ -13,6 +14,7 @@ export default function Home() {
     <Page title="ECC-BTS — Pusat Kolaborasi Pendidikan">
       <Hero />
       <Marquee />
+      <CategoryBar />
       <ServicesGrid />
       <WhyChooseUs />
       <StatsBand />

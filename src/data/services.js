@@ -2,9 +2,18 @@
 // The six core services (Produk) offered by ECC-BTS.
 // `accent` drives the gradient/accent color used by ServiceCard.
 // `icon` references a key in src/data/icons.jsx.
+// `image` points to a real photo in /public/images used on the Products page.
 // ───────────────────────────────────────────────────────────────────────────
 
-export const services = [
+// Reusable image paths (kept here so swapping a single file affects all
+// services that share it).
+const IMG_PAPER = '/images/publikasi-artikel-ilmiah.jpg'
+const IMG_DATA = '/images/struktur-data.jpg'
+
+// Static demo price applied to every service: Rp 900.000.
+const PRICE_IDR = 900000
+
+const baseServices = [
   {
     id: 'turnitin',
     number: '01',
@@ -21,6 +30,9 @@ export const services = [
     icon: 'FiCheckCircle',
     categoryId: 'integritas',
     accent: 'blue',
+    image: IMG_PAPER,
+    imageAlt:
+      'Halaman jurnal ilmiah dengan tanda highlight oranye dan pena di atasnya',
   },
   {
     id: 'statistik',
@@ -38,6 +50,9 @@ export const services = [
     icon: 'FiBarChart2',
     categoryId: 'analisis',
     accent: 'green',
+    image: IMG_DATA,
+    imageAlt:
+      'Diagram struktur data — antrian, linked list, stack, tree, dan graph',
   },
   {
     id: 'publikasi',
@@ -55,6 +70,9 @@ export const services = [
     icon: 'FiGlobe',
     categoryId: 'publikasi',
     accent: 'indigo',
+    image: IMG_PAPER,
+    imageAlt:
+      'Halaman artikel jurnal yang sedang dalam proses penyuntingan',
   },
   {
     id: 'proofreading',
@@ -72,6 +90,9 @@ export const services = [
     icon: 'FiEdit3',
     categoryId: 'integritas',
     accent: 'orange',
+    image: IMG_PAPER,
+    imageAlt:
+      'Naskah jurnal yang ditandai dengan stabilo dan koreksi pena',
   },
   {
     id: 'media',
@@ -89,6 +110,9 @@ export const services = [
     icon: 'FiMonitor',
     categoryId: 'media',
     accent: 'cyan',
+    image: IMG_DATA,
+    imageAlt:
+      'Visualisasi diagram pembelajaran interaktif berisi node dan keterangan',
   },
   {
     id: 'penerbitan',
@@ -106,7 +130,28 @@ export const services = [
     icon: 'FiBookOpen',
     categoryId: 'publikasi',
     accent: 'red',
+    image: IMG_PAPER,
+    imageAlt:
+      'Halaman naskah buku yang sedang dalam tahap akhir editorial',
   },
 ]
+
+// Listing metadata (rating, jumlah ulasan, badge) — demo data for the
+// marketplace-style product cards.
+const META = {
+  turnitin: { rating: 4.9, reviews: 320, badge: 'Terlaris' },
+  statistik: { rating: 4.8, reviews: 210, badge: 'Populer' },
+  publikasi: { rating: 5.0, reviews: 175, badge: 'Unggulan' },
+  proofreading: { rating: 4.9, reviews: 264, badge: null },
+  media: { rating: 4.7, reviews: 98, badge: 'Baru' },
+  penerbitan: { rating: 4.9, reviews: 142, badge: null },
+}
+
+// Every service shares the same static demo price (Rp 900.000).
+export const services = baseServices.map((s) => ({
+  ...s,
+  price: PRICE_IDR,
+  ...META[s.id],
+}))
 
 export const getServiceById = (id) => services.find((s) => s.id === id)

@@ -3,6 +3,10 @@ import { AnimatePresence } from 'framer-motion'
 import Layout from './components/layout/Layout'
 import Home from './pages/Home'
 import Products from './pages/Products'
+import ProductDetail from './pages/ProductDetail'
+import Cart from './pages/Cart'
+import Payment from './pages/Payment'
+import PaymentHistory from './pages/PaymentHistory'
 import Categories from './pages/Categories'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -16,6 +20,10 @@ export default function App() {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Home />} />
           <Route path="/produk" element={<Products />} />
+          <Route path="/produk/:id" element={<ProductDetail />} />
+          <Route path="/keranjang" element={<Cart />} />
+          <Route path="/bayar" element={<Payment />} />
+          <Route path="/riwayat-pembayaran" element={<PaymentHistory />} />
           <Route path="/kategori" element={<Categories />} />
           <Route path="/tentang" element={<About />} />
           <Route path="/kontak" element={<Contact />} />
