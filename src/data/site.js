@@ -15,7 +15,7 @@ export const site = {
   // Contact (placeholder demo data)
   whatsapp: '6282212345678', // international format for wa.me
   phoneDisplay: '0822-1234-5678',
-  email: 'emailanda@email.com',
+  email: 'ecc-bts@email.com',
   website: 'www.websiteanda.com',
   address: 'Jl. Pendidikan No. 17, Indonesia',
   hours: 'Senin – Sabtu, 08.00 – 21.00 WIB',
