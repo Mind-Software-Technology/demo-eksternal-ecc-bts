@@ -466,7 +466,9 @@
 .contact-tile--wa .contact-tile__ic {
   background: linear-gradient(135deg, #1faa54, #25d366);
 }
-.contact-tile span {
+/* Label text only — scoped to the text column so it doesn't override the
+   icon badge's own color/size (.contact-tile__ic is a direct-child span). */
+.contact-tile div span {
   font-size: 0.82rem;
   color: var(--muted);
   display: block;
