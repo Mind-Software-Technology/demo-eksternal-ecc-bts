@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { FiMenu, FiX } from 'react-icons/fi'
-import { FaWhatsapp } from 'react-icons/fa6'
-import { site, waLink } from '../../data/site'
+import { FiMenu, FiX, FiShoppingCart } from 'react-icons/fi'
+import { site } from '../../data/site'
+import { useCart } from '../../context/cart'
 import BrandMark from './BrandMark'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const { count } = useCart()
 
   // Solidify navbar after scrolling past the hero top.
   useEffect(() => {
@@ -44,14 +45,23 @@ export default function Navbar() {
         </ul>
 
         <div className="navbar__right">
-          <a
-            href={waLink()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn--wa navbar__cta-desktop"
+          {/* Demo-only auth buttons (no action). */}
+          <div className="navbar__auth navbar__cta-desktop">
+            <button type="button" className="navbar__btn navbar__btn--login">
+              Login
+            </button>
+            <button type="button" className="navbar__btn navbar__btn--signup">
+              Daftar
+            </button>
+          </div>
+          <NavLink
+            to="/keranjang"
+            className="navbar__cart"
+            aria-label={`Keranjang belanja${count ? `, ${count} item` : ''}`}
           >
-            <FaWhatsapp /> Hubungi Kami
-          </a>
+            <FiShoppingCart />
+            {count > 0 && <span className="navbar__cart-badge">{count}</span>}
+          </NavLink>
           <button
             type="button"
             className="navbar__toggle"
@@ -103,14 +113,29 @@ export default function Navbar() {
                   {item.label}
                 </NavLink>
               ))}
-              <a
-                href={waLink()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn--wa btn--block drawer__cta"
+              <div className="drawer__auth">
+                <button
+                  type="button"
+                  className="btn btn--outline btn--block"
+                  onClick={() => setOpen(false)}
+                >
+                  Login
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--blue btn--block"
+                  onClick={() => setOpen(false)}
+                >
+                  Daftar
+                </button>
+              </div>
+              <NavLink
+                to="/keranjang"
+                className="btn btn--outline btn--block drawer__cta"
+                onClick={() => setOpen(false)}
               >
-                <FaWhatsapp /> Hubungi via WhatsApp
-              </a>
+                <FiShoppingCart /> Keranjang{count > 0 ? ` (${count})` : ''}
+              </NavLink>
             </motion.aside>
           </>
         )}
