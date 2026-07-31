@@ -16,6 +16,17 @@ export function AuthProvider({ children }) {
       .finally(() => setReady(true))
   }, [])
 
+  const refresh = useCallback(async () => {
+    try {
+      const u = await api.auth.me()
+      setUser(u)
+      return u
+    } catch {
+      setUser(null)
+      return null
+    }
+  }, [])
+
   const login = useCallback(async (payload) => {
     const u = await api.auth.login(payload)
     setUser(u)
@@ -28,6 +39,12 @@ export function AuthProvider({ children }) {
     return u
   }, [])
 
+  const loginWithGoogle = useCallback(async (idToken) => {
+    const u = await api.auth.google(idToken)
+    setUser(u)
+    return u
+  }, [])
+
   const logout = useCallback(async () => {
     try {
       await api.auth.logout()
@@ -36,8 +53,12 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  const resendVerification = useCallback(() => api.auth.resendVerification(), [])
+
   return (
-    <AuthContext.Provider value={{ user, ready, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, ready, login, register, loginWithGoogle, logout, refresh, resendVerification }}
+    >
       {children}
     </AuthContext.Provider>
   )

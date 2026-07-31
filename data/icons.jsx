@@ -32,6 +32,7 @@ import {
   FiZap,
   FiFileText,
   FiLayers,
+  FiDollarSign,
 } from 'react-icons/fi'
 import {
   FaWhatsapp,
@@ -74,6 +75,7 @@ const ICONS = {
   FiZap,
   FiFileText,
   FiLayers,
+  FiDollarSign,
   // brand
   FaWhatsapp,
   FaInstagram,
