@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../lib/api'
 import { CartContext } from './cart'
+import { useAuth } from './auth'
 
 // ───────────────────────────────────────────────────────────────────────────
 // Cart state is now sourced from the Laravel API (guest via a server-assigned
@@ -35,6 +36,26 @@ export function CartProvider({ children }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial cart fetch on mount
     refresh()
   }, [refresh])
+
+  // Cart::forRequest resolves a different cart depending on auth state
+  // (user_id vs. X-Session-Id, no merge-on-login) — re-fetch whenever the
+  // logged-in identity actually changes so stale cross-identity items don't
+  // linger in the UI. The initial resolution is skipped since the mount
+  // effect above already covers it.
+  const { user, ready: authReady } = useAuth()
+  const authKeyRef = useRef(undefined)
+  useEffect(() => {
+    if (!authReady) return
+    const key = user?.id ?? null
+    if (authKeyRef.current === undefined) {
+      authKeyRef.current = key
+      return
+    }
+    if (authKeyRef.current !== key) {
+      authKeyRef.current = key
+      refresh()
+    }
+  }, [authReady, user, refresh])
 
   // Auto-dismiss the toast.
   useEffect(() => {

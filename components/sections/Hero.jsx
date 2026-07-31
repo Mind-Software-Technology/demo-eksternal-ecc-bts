@@ -138,7 +138,7 @@ export default function Hero() {
               placeholder="Cari layanan… mis. Turnitin, publikasi, statistik"
               aria-label="Cari layanan"
             />
-            <button type="submit" className="btn btn--blue">
+            <button type="submit" className="btn btn--primary">
               Cari
             </button>
           </motion.form>

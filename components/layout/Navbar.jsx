@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { FiMenu, FiX, FiShoppingCart, FiUser, FiLogOut } from 'react-icons/fi'
+import { FiMenu, FiX, FiShoppingCart, FiLogOut } from 'react-icons/fi'
 import { getNavItems } from '../../data/site'
 import { useCart } from '../../context/cart'
 import { useAuth } from '../../context/auth'
 import { useSiteConfig } from '../../hooks/useSiteConfig'
 import BrandMark from './BrandMark'
-import AuthModal from './AuthModal'
+import UserMenu from './UserMenu'
 
 /** Mirrors react-router's <NavLink> active-class behavior for next/link. */
 function isPathActive(pathname, href, end) {
@@ -21,11 +21,20 @@ function isPathActive(pathname, href, end) {
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
-  const [authMode, setAuthMode] = useState(null) // null | 'login' | 'register'
+  const [verifySent, setVerifySent] = useState(false)
   const { count } = useCart()
-  const { user, ready, logout } = useAuth()
+  const { user, ready, logout, resendVerification } = useAuth()
   const config = useSiteConfig()
   const pathname = usePathname()
+
+  const onResendVerification = async () => {
+    try {
+      await resendVerification()
+      setVerifySent(true)
+    } catch {
+      /* silently ignore — user can retry */
+    }
+  }
 
   const navItems = getNavItems(config)
 
@@ -37,13 +46,13 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Lock body scroll while the drawer/modal is open.
+  // Lock body scroll while the drawer is open.
   useEffect(() => {
-    document.body.style.overflow = open || authMode ? 'hidden' : ''
+    document.body.style.overflow = open ? 'hidden' : ''
     return () => {
       document.body.style.overflow = ''
     }
-  }, [open, authMode])
+  }, [open])
 
   const cartActive = isPathActive(pathname, '/keranjang', false)
 
@@ -74,30 +83,15 @@ export default function Navbar() {
         <div className="navbar__right">
           <div className="navbar__auth navbar__cta-desktop">
             {ready && user ? (
-              <>
-                <span className="navbar__btn navbar__btn--login" aria-hidden="true">
-                  <FiUser /> {user.name}
-                </span>
-                <button type="button" className="navbar__btn navbar__btn--signup" onClick={logout}>
-                  <FiLogOut /> Keluar
-                </button>
-              </>
+              <UserMenu />
             ) : (
               <>
-                <button
-                  type="button"
-                  className="navbar__btn navbar__btn--login"
-                  onClick={() => setAuthMode('login')}
-                >
+                <Link href="/login" className="navbar__btn navbar__btn--login">
                   Login
-                </button>
-                <button
-                  type="button"
-                  className="navbar__btn navbar__btn--signup"
-                  onClick={() => setAuthMode('register')}
-                >
+                </Link>
+                <Link href="/daftar" className="navbar__btn navbar__btn--signup">
                   Daftar
-                </button>
+                </Link>
               </>
             )}
           </div>
@@ -167,38 +161,48 @@ export default function Navbar() {
               })}
               <div className="drawer__auth">
                 {ready && user ? (
-                  <button
-                    type="button"
-                    className="btn btn--outline btn--block"
-                    onClick={() => {
-                      setOpen(false)
-                      logout()
-                    }}
-                  >
-                    <FiLogOut /> Keluar ({user.name})
-                  </button>
-                ) : (
                   <>
+                    <div className="drawer__user">
+                      <b>{user.name}</b>
+                      <span>{user.email}</span>
+                    </div>
+                    {!user.email_verified && (
+                      <button
+                        type="button"
+                        className="navbar__verify-pill"
+                        onClick={onResendVerification}
+                        disabled={verifySent}
+                      >
+                        {verifySent ? 'Link terkirim' : 'Verifikasi email'}
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="btn btn--outline btn--block"
                       onClick={() => {
                         setOpen(false)
-                        setAuthMode('login')
+                        logout()
                       }}
+                    >
+                      <FiLogOut /> Keluar
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="btn btn--outline btn--block"
+                      onClick={() => setOpen(false)}
                     >
                       Login
-                    </button>
-                    <button
-                      type="button"
+                    </Link>
+                    <Link
+                      href="/daftar"
                       className="btn btn--primary btn--block"
-                      onClick={() => {
-                        setOpen(false)
-                        setAuthMode('register')
-                      }}
+                      onClick={() => setOpen(false)}
                     >
                       Daftar
-                    </button>
+                    </Link>
                   </>
                 )}
               </div>
@@ -213,8 +217,6 @@ export default function Navbar() {
           </>
         )}
       </AnimatePresence>
-
-      {authMode && <AuthModal mode={authMode} onClose={() => setAuthMode(null)} />}
     </header>
   )
 }
