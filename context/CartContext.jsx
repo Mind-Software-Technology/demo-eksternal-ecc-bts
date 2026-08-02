@@ -1,14 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from '../lib/api'
 import { CartContext } from './cart'
 import { useAuth } from './auth'
 
 // ───────────────────────────────────────────────────────────────────────────
-// Cart state is now sourced from the Laravel API (guest via a server-assigned
-// X-Session-Id header, persisted user via the Sanctum session cookie — see
-// lib/api.js). The server is the source of truth for items/prices/totals.
+// Cart state is sourced from the Laravel API. Cart/checkout require a
+// logged-in Sanctum session — there is no guest cart — so fetching is driven
+// entirely by auth state (see lib/api.js).
 // ───────────────────────────────────────────────────────────────────────────
 
 const EMPTY_CART = { session_id: null, items: [], subtotal: 0, total: 0 }
@@ -16,9 +16,10 @@ const EMPTY_CART = { session_id: null, items: [], subtotal: 0, total: 0 }
 export function CartProvider({ children }) {
   const [cart, setCart] = useState(EMPTY_CART)
   const [toast, setToast] = useState(null)
-  // False until the cart has been fetched at least once. Pages that redirect
-  // based on an empty cart (e.g. /bayar) must wait for this — otherwise
-  // they'd bounce away before the real cart loads.
+  // False until the cart has resolved at least once (fetched, or settled to
+  // empty for a logged-out visitor). Pages that redirect based on an empty
+  // cart (e.g. /bayar) must wait for this — otherwise they'd bounce away
+  // before the real cart loads.
   const [ready, setReady] = useState(false)
 
   const refresh = useCallback(async () => {
@@ -32,28 +33,19 @@ export function CartProvider({ children }) {
     }
   }, [])
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial cart fetch on mount
-    refresh()
-  }, [refresh])
-
-  // Cart::forRequest resolves a different cart depending on auth state
-  // (user_id vs. X-Session-Id, no merge-on-login) — re-fetch whenever the
-  // logged-in identity actually changes so stale cross-identity items don't
-  // linger in the UI. The initial resolution is skipped since the mount
-  // effect above already covers it.
+  // Only fetch once auth has resolved, and only when actually logged in —
+  // logged-out visitors never have a cart to fetch. Re-runs whenever the
+  // logged-in identity changes (login/logout/switch account) so stale
+  // cross-identity items never linger in the UI.
   const { user, ready: authReady } = useAuth()
-  const authKeyRef = useRef(undefined)
   useEffect(() => {
     if (!authReady) return
-    const key = user?.id ?? null
-    if (authKeyRef.current === undefined) {
-      authKeyRef.current = key
-      return
-    }
-    if (authKeyRef.current !== key) {
-      authKeyRef.current = key
+    if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches the logged-in user's cart once identity resolves/changes
       refresh()
+    } else {
+      setCart(EMPTY_CART)
+      setReady(true)
     }
   }, [authReady, user, refresh])
 
@@ -122,6 +114,7 @@ export function CartProvider({ children }) {
         price: it.price,
         qty: it.qty,
         lineTotal: it.line_total,
+        requiresAttachment: it.service?.requires_attachment ?? false,
       })),
     [cart.items],
   )

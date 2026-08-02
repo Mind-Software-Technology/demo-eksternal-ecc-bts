@@ -15,7 +15,7 @@ export default function SectionHeading({
         {title}
       </h2>
       {subtitle && (
-        <p className="lead" style={{ color: dark ? '#d7e3ff' : undefined }}>
+        <p className="lead" style={{ color: dark ? 'var(--ondark-body)' : undefined }}>
           {subtitle}
         </p>
       )}

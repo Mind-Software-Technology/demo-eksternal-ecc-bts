@@ -10,12 +10,22 @@ import CTABand from '../../../components/sections/CTABand'
 import { RevealGroup, RevealItem } from '../../../components/ui/Reveal'
 import Rating from '../../../components/ui/Rating'
 import { useCart } from '../../../context/cart'
+import { useAuth, loginUrl } from '../../../context/auth'
 import { api } from '../../../lib/api'
 
 function ProductsContent() {
   const params = useSearchParams()
   const router = useRouter()
   const { addItem } = useCart()
+  const { user } = useAuth()
+
+  const addToCart = (serviceId) => {
+    if (!user) {
+      router.push(loginUrl('/produk'))
+      return
+    }
+    addItem(serviceId)
+  }
 
   const active = params.get('cat') || 'all'
   const query = (params.get('q') || '').trim()
@@ -162,7 +172,7 @@ function ProductsContent() {
                             type="button"
                             className="btn btn--blue btn--sm"
                             aria-label={`Tambah ${s.title} ke keranjang`}
-                            onClick={() => addItem(s.id)}
+                            onClick={() => addToCart(s.id)}
                           >
                             <FiShoppingCart /> Keranjang
                           </button>

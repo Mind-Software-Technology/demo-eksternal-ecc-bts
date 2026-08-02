@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
-import { FiUser, FiChevronDown, FiLogOut, FiAlertCircle } from 'react-icons/fi'
+import { FiUser, FiChevronDown, FiLogOut, FiAlertCircle, FiClock } from 'react-icons/fi'
 import { useAuth } from '../../context/auth'
 
 /** Collapses the logged-in navbar state (name + verify prompt + logout) into one dropdown. */
@@ -69,6 +70,17 @@ export default function UserMenu() {
                 {verifySent ? 'Link verifikasi terkirim' : 'Email belum diverifikasi — kirim ulang link'}
               </button>
             )}
+
+            <Link href="/profil" className="navbar__user-menu__link" onClick={() => setOpen(false)}>
+              <FiUser /> Profil Saya
+            </Link>
+            <Link
+              href="/riwayat-pembayaran"
+              className="navbar__user-menu__link"
+              onClick={() => setOpen(false)}
+            >
+              <FiClock /> Riwayat Pembayaran
+            </Link>
 
             <button
               type="button"

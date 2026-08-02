@@ -11,12 +11,14 @@ import Reveal from '../../../../components/ui/Reveal'
 import Rating from '../../../../components/ui/Rating'
 import { formatIDR } from '../../../../data/format'
 import { useCart } from '../../../../context/cart'
+import { useAuth, loginUrl } from '../../../../context/auth'
 import { api } from '../../../../lib/api'
 
 export default function ProductDetail() {
   const { id: slug } = useParams()
   const router = useRouter()
   const { addItem } = useCart()
+  const { user } = useAuth()
   const [service, setService] = useState(null)
   const [notFound, setNotFound] = useState(false)
 
@@ -45,7 +47,19 @@ export default function ProductDetail() {
 
   if (!service) return null
 
+  const addToCart = () => {
+    if (!user) {
+      router.push(loginUrl(`/produk/${slug}`))
+      return
+    }
+    addItem(service.id)
+  }
+
   const orderNow = () => {
+    if (!user) {
+      router.push(loginUrl(`/produk/${slug}`))
+      return
+    }
     addItem(service.id)
     router.push('/keranjang')
   }
@@ -102,7 +116,7 @@ export default function ProductDetail() {
               <button
                 type="button"
                 className="btn btn--outline btn--lg"
-                onClick={() => addItem(service.id)}
+                onClick={addToCart}
               >
                 <FiShoppingCart /> Tambahkan ke Keranjang
               </button>
