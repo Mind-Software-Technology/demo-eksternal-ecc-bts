@@ -9,3 +9,6 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth harus dipakai di dalam <AuthProvider>')
   return ctx
 }
+
+/** Login URL that returns to `path` after a successful sign-in (see AuthForm's ?redirect=). */
+export const loginUrl = (path) => `/login?redirect=${encodeURIComponent(path)}`

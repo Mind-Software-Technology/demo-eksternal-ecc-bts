@@ -2,18 +2,21 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   FiClock,
   FiCheckCircle,
   FiXCircle,
   FiArrowRight,
   FiFileText,
+  FiDownload,
+  FiUploadCloud,
 } from 'react-icons/fi'
 import Page from '../../../components/layout/Page'
 import PageHero from '../../../components/sections/PageHero'
 import Reveal from '../../../components/ui/Reveal'
 import { formatIDR } from '../../../data/format'
-import { useAuth } from '../../../context/auth'
+import { useAuth, loginUrl } from '../../../context/auth'
 import { api } from '../../../lib/api'
 
 const fmtDate = (iso) =>
@@ -46,35 +49,45 @@ function StatusBadge({ status }) {
 
 export default function PaymentHistory() {
   const { user, ready } = useAuth()
-  const [email, setEmail] = useState('')
-  const [lookupEmail, setLookupEmail] = useState(null)
+  const router = useRouter()
   const [orders, setOrders] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [cancellingNo, setCancellingNo] = useState(null)
+  const [cancelError, setCancelError] = useState(null)
 
-  const fetchOrders = (forEmail) => {
+  // Orders are account-only — bounce a logged-out visitor to login.
+  useEffect(() => {
+    if (ready && !user) router.replace(loginUrl('/riwayat-pembayaran'))
+  }, [ready, user, router])
+
+  useEffect(() => {
+    if (!user) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches the logged-in user's order history once auth resolves
     setLoading(true)
     setError(null)
     api.orders
-      .list(forEmail)
+      .list()
       .then(({ items }) => setOrders(items))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
+  }, [user])
+
+  const cancelOrder = async (orderNo) => {
+    setCancellingNo(orderNo)
+    setCancelError(null)
+    try {
+      await api.payments.cancel(orderNo)
+      const { items } = await api.orders.list()
+      setOrders(items)
+    } catch (e) {
+      setCancelError(e.message || 'Gagal membatalkan pesanan.')
+    } finally {
+      setCancellingNo(null)
+    }
   }
 
-  useEffect(() => {
-    if (!ready) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches the logged-in user's orders once auth state resolves
-    if (user) fetchOrders(undefined)
-  }, [ready, user])
-
-  const onLookup = (e) => {
-    e.preventDefault()
-    setLookupEmail(email)
-    fetchOrders(email)
-  }
-
-  const showEmailForm = ready && !user && lookupEmail === null
+  if (!ready || !user) return null
 
   return (
     <Page title="Riwayat Pembayaran — ECC-BTS">
@@ -86,26 +99,7 @@ export default function PaymentHistory() {
 
       <section className="section">
         <div className="container">
-          {showEmailForm ? (
-            <Reveal className="form-card" style={{ maxWidth: 480, margin: '0 auto' }}>
-              <form onSubmit={onLookup} noValidate>
-                <div className="field">
-                  <label htmlFor="lookup-email">Masukkan email yang dipakai saat memesan</label>
-                  <input
-                    id="lookup-email"
-                    type="email"
-                    required
-                    placeholder="email@contoh.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                <button type="submit" className="btn btn--blue btn--block btn--lg">
-                  Lihat Riwayat
-                </button>
-              </form>
-            </Reveal>
-          ) : loading || !ready ? (
+          {loading ? (
             <p className="empty-note">Memuat riwayat pembayaran…</p>
           ) : error ? (
             <p className="empty-note">Gagal memuat riwayat: {error}</p>
@@ -117,12 +111,13 @@ export default function PaymentHistory() {
                 Setelah Anda menyelesaikan pembayaran, transaksinya akan tampil
                 di sini.
               </p>
-              <Link href="/produk" className="btn btn--blue btn--lg">
+              <Link href="/produk" className="btn btn--primary btn--lg">
                 Mulai Belanja <FiArrowRight />
               </Link>
             </Reveal>
           ) : (
             <div className="pay-history">
+              {cancelError && <p className="auth-modal__error">{cancelError}</p>}
               {orders.map((o, i) => (
                 <Reveal className="pay-record" key={o.id} delay={i * 0.05}>
                   <div className="pay-record__top">
@@ -136,13 +131,37 @@ export default function PaymentHistory() {
                   </div>
 
                   <ul className="pay-record__items">
-                    {o.items.map((it) => (
+                    {(o.items || []).map((it) => (
                       <li key={it.id}>
                         <span>
                           {it.title_snapshot}
                           {it.qty > 1 && <em> × {it.qty}</em>}
                         </span>
-                        <b>{formatIDR(it.line_total)}</b>
+                        <span className="pay-record__item-right">
+                          {it.has_result && (
+                            <a
+                              className="pay-record__result"
+                              href={api.orders.resultUrl(o.order_no, it.id)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={it.result_original_name}
+                            >
+                              <FiDownload /> Hasil Siap — Unduh
+                            </a>
+                          )}
+                          {it.has_attachment && (
+                            <a
+                              className="pay-record__attachment"
+                              href={api.orders.attachmentUrl(o.order_no, it.id)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={it.attachment_original_name}
+                            >
+                              <FiUploadCloud /> File Saya
+                            </a>
+                          )}
+                          <b>{formatIDR(it.line_total)}</b>
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -153,6 +172,17 @@ export default function PaymentHistory() {
                       Total <b>{formatIDR(o.total)}</b>
                     </span>
                   </div>
+
+                  {o.status === 'awaiting_payment' && (
+                    <button
+                      type="button"
+                      className="btn btn--outline btn--sm pay-record__cancel"
+                      onClick={() => cancelOrder(o.order_no)}
+                      disabled={cancellingNo === o.order_no}
+                    >
+                      {cancellingNo === o.order_no ? 'Membatalkan…' : 'Batalkan Pesanan'}
+                    </button>
+                  )}
                 </Reveal>
               ))}
             </div>

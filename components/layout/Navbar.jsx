@@ -38,6 +38,14 @@ export default function Navbar() {
 
   const navItems = getNavItems(config)
 
+  // /login and /daftar have no dark hero behind the navbar, so the
+  // transparent/white "top" styling (meant to sit over a dark hero) would
+  // leave the text unreadable there. /keranjang is auth-gated and renders
+  // nothing (a blank white body) until the auth check resolves or redirects
+  // a guest to /login, which is the same white-text-on-white problem for a
+  // moment — force the solid style on all of these routes.
+  const noHeroRoute = pathname === '/login' || pathname === '/daftar' || pathname === '/keranjang'
+
   // Solidify navbar after scrolling past the hero top.
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -57,7 +65,7 @@ export default function Navbar() {
   const cartActive = isPathActive(pathname, '/keranjang', false)
 
   return (
-    <header className={`navbar ${scrolled ? 'navbar--solid' : 'navbar--top'}`}>
+    <header className={`navbar ${scrolled || noHeroRoute ? 'navbar--solid' : 'navbar--top'}`}>
       <nav className="navbar__inner" aria-label="Navigasi utama">
         <Link href="/" aria-label="Beranda ECC-BTS">
           <BrandMark />
@@ -176,6 +184,20 @@ export default function Navbar() {
                         {verifySent ? 'Link terkirim' : 'Verifikasi email'}
                       </button>
                     )}
+                    <Link
+                      href="/profil"
+                      className="drawer__link"
+                      onClick={() => setOpen(false)}
+                    >
+                      Profil Saya
+                    </Link>
+                    <Link
+                      href="/riwayat-pembayaran"
+                      className="drawer__link"
+                      onClick={() => setOpen(false)}
+                    >
+                      Riwayat Pembayaran
+                    </Link>
                     <button
                       type="button"
                       className="btn btn--outline btn--block"

@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   FiGlobe,
   FiClock,
@@ -17,10 +17,12 @@ import {
 import { FaQrcode, FaUniversity, FaWallet, FaStore } from 'react-icons/fa'
 import Page from '../../components/layout/Page'
 import BrandMark from '../../components/layout/BrandMark'
+import CheckoutSteps from '../../components/layout/CheckoutSteps'
 import { useCart } from '../../context/cart'
-import { useAuth } from '../../context/auth'
+import { useAuth, loginUrl } from '../../context/auth'
 import { formatIDR } from '../../data/format'
 import { api } from '../../lib/api'
+import { takeCachedOrder } from '../../lib/checkoutOrderCache'
 
 /* Decorative fallback QR (used only if Midtrans doesn't return a qr_url — e.g.
    sandbox response variations). Not a real scannable code. */
@@ -75,8 +77,10 @@ const METHODS = [
 const TERMINAL_OK = ['settlement', 'capture']
 const TERMINAL_FAIL = ['expire', 'cancel', 'deny', 'failure']
 
-export default function Payment() {
-  const { detailed, total, ready, refresh: refreshCart } = useCart()
+function PaymentInner() {
+  const searchParams = useSearchParams()
+  const orderNo = searchParams.get('order_no')
+  const { refresh: refreshCart } = useCart()
   const { user, ready: authReady } = useAuth()
   const router = useRouter()
 
@@ -85,11 +89,17 @@ export default function Payment() {
   const [store, setStore] = useState('indomaret')
   const [ewallet, setEwallet] = useState('gopay')
 
-  const [guest, setGuest] = useState({ guest_name: '', guest_email: '', guest_phone: '' })
-  const [order, setOrder] = useState(null)
+  // Step 1 (/bayar/data) hands the just-created order off via an in-memory
+  // cache so this page can render immediately instead of re-fetching it over
+  // the network and flashing blank while the request is in flight.
+  const [order, setOrder] = useState(() => (orderNo ? takeCachedOrder(orderNo) : null))
+  const [orderLoading, setOrderLoading] = useState(() => !order)
+  const [orderError, setOrderError] = useState(null)
   const [payment, setPayment] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState(null)
   const pollRef = useRef(null)
 
   const [dueAt] = useState(() => new Date(Date.now() + 24 * 60 * 60 * 1000))
@@ -105,16 +115,50 @@ export default function Payment() {
     [dueAt],
   )
 
-  const description = useMemo(() => {
-    if (detailed.length === 0) return 'Pembayaran layanan ECC-BTS'
-    if (detailed.length === 1) return `Pembayaran untuk ${detailed[0].title}`
-    return `Pembayaran untuk ${detailed.length} layanan (${detailed[0].title}, dll.)`
-  }, [detailed])
-
-  // Reached with an empty cart (e.g. direct URL / refresh) and no order created yet.
+  // Checkout is account-only — bounce a logged-out visitor to login.
   useEffect(() => {
-    if (ready && detailed.length === 0 && !order) router.replace('/keranjang')
-  }, [ready, detailed.length, order, router])
+    if (authReady && !user) {
+      router.replace(loginUrl(orderNo ? `/bayar?order_no=${orderNo}` : '/bayar'))
+    }
+  }, [authReady, user, router, orderNo])
+
+  // This step only makes sense once an order exists — step 1 (/bayar/data)
+  // is the one that creates it.
+  useEffect(() => {
+    if (!orderNo) router.replace('/bayar/data')
+  }, [orderNo, router])
+
+  // Load the order created in step 1 — skipped when it was already handed off
+  // via the cache above (the normal step 1 → step 2 flow).
+  useEffect(() => {
+    if (!user || !orderNo || order?.order_no === orderNo) return
+    let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- re-shows the loading state for a direct visit / orderNo change, not covered by the cache above
+    setOrderLoading(true)
+    api.orders
+      .show(orderNo)
+      .then((data) => {
+        if (cancelled) return
+        setOrder(data)
+        setOrderError(null)
+      })
+      .catch((err) => {
+        if (!cancelled) setOrderError(err.message || 'Pesanan tidak ditemukan.')
+      })
+      .finally(() => {
+        if (!cancelled) setOrderLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user, orderNo, order])
+
+  // The cart was already cleared server-side when the order was created in
+  // step 1 — sync the local cart state (navbar badge etc.) now that we're here.
+  useEffect(() => {
+    if (order) refreshCart()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id])
 
   // Poll payment status once a charge has been made.
   useEffect(() => {
@@ -123,41 +167,49 @@ export default function Payment() {
     }
     pollRef.current = setInterval(() => {
       api.payments
-        .status(order.order_no, order.guest_email)
+        .status(order.order_no)
         .then(setPayment)
         .catch(() => {})
     }, 4000)
     return () => clearInterval(pollRef.current)
   }, [payment, order])
 
-  // Cart is emptied server-side once the order is created — refresh the local view.
-  useEffect(() => {
-    if (order) refreshCart()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order])
+  if (!authReady || !user || !orderNo || orderLoading) return null
 
-  if (!ready || !authReady || (detailed.length === 0 && !order)) return null
+  if (orderError) {
+    return (
+      <Page title="Pesanan Tidak Ditemukan — ECC-BTS">
+        <div className="pay-done">
+          <FiXCircle className="pay-done__ic" style={{ color: 'var(--color-danger)' }} />
+          <h1>Pesanan Tidak Ditemukan</h1>
+          <p>{orderError}</p>
+          <div className="pay-done__actions">
+            <Link href="/keranjang" className="btn btn--primary btn--lg">
+              Kembali ke Keranjang
+            </Link>
+          </div>
+        </div>
+      </Page>
+    )
+  }
+
+  if (!order) return null
+
+  const total = order.total
+  const items = order.items || []
+  const description =
+    items.length === 0
+      ? 'Pembayaran layanan ECC-BTS'
+      : items.length === 1
+        ? `Pembayaran untuk ${items[0].title_snapshot}`
+        : `Pembayaran untuk ${items.length} layanan (${items[0].title_snapshot}, dll.)`
 
   const submit = async (e) => {
     e.preventDefault()
     setError(null)
     setBusy(true)
     try {
-      let currentOrder = order
-      if (!currentOrder) {
-        currentOrder = await api.orders.create(
-          user
-            ? {}
-            : {
-                guest_name: guest.guest_name,
-                guest_email: guest.guest_email,
-                guest_phone: guest.guest_phone || undefined,
-              },
-        )
-        setOrder(currentOrder)
-      }
-
-      const payload = { order_no: currentOrder.order_no }
+      const payload = { order_no: order.order_no }
       if (openMethod === 'bank_transfer') {
         payload.payment_type = 'bank_transfer'
         payload.bank = bank
@@ -170,7 +222,7 @@ export default function Payment() {
         payload.payment_type = 'qris'
       }
 
-      const paymentData = await api.payments.charge(payload, currentOrder.guest_email)
+      const paymentData = await api.payments.charge(payload)
       setPayment(paymentData)
     } catch (err) {
       setError(err.message || 'Gagal memproses pembayaran. Coba lagi.')
@@ -182,6 +234,19 @@ export default function Payment() {
   const status = payment?.transaction_status
   const isPaid = status && TERMINAL_OK.includes(status)
   const isFailed = status && TERMINAL_FAIL.includes(status)
+  const isCancelled = status === 'cancel'
+
+  const cancelOrder = async () => {
+    setCancelling(true)
+    setCancelError(null)
+    try {
+      setPayment(await api.payments.cancel(order.order_no))
+    } catch (err) {
+      setCancelError(err.message || 'Gagal membatalkan pesanan.')
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   if (isPaid) {
     return (
@@ -208,16 +273,22 @@ export default function Payment() {
 
   if (isFailed) {
     return (
-      <Page title="Pembayaran Gagal — ECC-BTS">
+      <Page title={isCancelled ? 'Pesanan Dibatalkan — ECC-BTS' : 'Pembayaran Gagal — ECC-BTS'}>
         <div className="pay-done">
           <FiXCircle className="pay-done__ic" style={{ color: 'var(--color-danger)' }} />
-          <h1>Pembayaran Tidak Berhasil</h1>
+          <h1>{isCancelled ? 'Pesanan Dibatalkan' : 'Pembayaran Tidak Berhasil'}</h1>
           <p>
-            Transaksi untuk invoice <b>#{order.order_no}</b> berstatus{' '}
-            <b>{status}</b>. Silakan coba lagi dengan metode pembayaran lain.
+            {isCancelled ? (
+              <>Pesanan untuk invoice <b>#{order.order_no}</b> telah Anda batalkan.</>
+            ) : (
+              <>
+                Transaksi untuk invoice <b>#{order.order_no}</b> berstatus{' '}
+                <b>{status}</b>. Silakan coba lagi dengan metode pembayaran lain.
+              </>
+            )}
           </p>
           <div className="pay-done__actions">
-            <Link href="/keranjang" className="btn btn--blue btn--lg">
+            <Link href="/keranjang" className="btn btn--primary btn--lg">
               Kembali ke Keranjang
             </Link>
           </div>
@@ -283,6 +354,16 @@ export default function Payment() {
               </p>
             </div>
 
+            {cancelError && <p className="auth-modal__error">{cancelError}</p>}
+            <button
+              type="button"
+              className="btn btn--outline btn--block"
+              onClick={cancelOrder}
+              disabled={cancelling}
+            >
+              {cancelling ? 'Membatalkan…' : 'Batalkan Pesanan'}
+            </button>
+
             <Link href="/riwayat-pembayaran" className="pay-back">
               <FiArrowLeft /> Lihat riwayat pembayaran
             </Link>
@@ -316,6 +397,8 @@ export default function Payment() {
             </span>
           </header>
 
+          <CheckoutSteps active={2} />
+
           <div className="pay-amount">
             <span className="pay-amount__due">
               <FiClock /> Bayar sebelum {dueLabel} WIB
@@ -324,45 +407,6 @@ export default function Payment() {
           </div>
 
           {error && <p className="auth-modal__error">{error}</p>}
-
-          {!user && (
-            <>
-              <h2 className="pay-section-label">Data Pemesan</h2>
-              <div className="field">
-                <label htmlFor="guest_name">Nama Lengkap</label>
-                <input
-                  id="guest_name"
-                  required
-                  value={guest.guest_name}
-                  onChange={(e) => setGuest({ ...guest, guest_name: e.target.value })}
-                  placeholder="Nama Anda"
-                />
-              </div>
-              <div className="field--row">
-                <div className="field">
-                  <label htmlFor="guest_email">Email</label>
-                  <input
-                    id="guest_email"
-                    type="email"
-                    required
-                    value={guest.guest_email}
-                    onChange={(e) => setGuest({ ...guest, guest_email: e.target.value })}
-                    placeholder="email@contoh.com"
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="guest_phone">No. HP (opsional)</label>
-                  <input
-                    id="guest_phone"
-                    type="tel"
-                    value={guest.guest_phone}
-                    onChange={(e) => setGuest({ ...guest, guest_phone: e.target.value })}
-                    placeholder="08xx-xxxx-xxxx"
-                  />
-                </div>
-              </div>
-            </>
-          )}
 
           <h2 className="pay-section-label">Metode Pembayaran</h2>
 
@@ -482,8 +526,8 @@ export default function Payment() {
             {busy ? 'Memproses…' : 'Bayar Sekarang'}
           </button>
 
-          <Link href="/keranjang" className="pay-back">
-            <FiArrowLeft /> Kembali ke keranjang
+          <Link href={`/bayar/data?order_no=${encodeURIComponent(order.order_no)}`} className="pay-back">
+            <FiArrowLeft /> Ubah data pemesan
           </Link>
 
           <div className="pay-foot">
@@ -510,13 +554,13 @@ export default function Payment() {
           </div>
 
           <ul className="pay-summary__items">
-            {detailed.map((it) => (
-              <li key={it.cartItemId}>
+            {items.map((it) => (
+              <li key={it.id}>
                 <span>
-                  {it.title}
+                  {it.title_snapshot}
                   {it.qty > 1 && <em> × {it.qty}</em>}
                 </span>
-                <b>{formatIDR(it.lineTotal)}</b>
+                <b>{formatIDR(it.line_total)}</b>
               </li>
             ))}
           </ul>
@@ -528,5 +572,13 @@ export default function Payment() {
         </aside>
       </form>
     </Page>
+  )
+}
+
+export default function Payment() {
+  return (
+    <Suspense fallback={null}>
+      <PaymentInner />
+    </Suspense>
   )
 }
