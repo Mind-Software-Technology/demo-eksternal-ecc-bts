@@ -12,6 +12,7 @@
   --blue-500: #5b8def;
   --blue-400: #8fb4f7;
   --blue-300: #b9d3fb;
+  --blue-200: #cdd5e6;
   --blue-100: #e9f1ff;
   --red: #ef4d5a;
   --red-600: #e11d2a;
@@ -44,6 +45,12 @@
   --bg: #ffffff;
   --soft: #f8f9fa;
   --soft-2: #e4ecf8;
+
+  /* ---- Text on dark (readable over --gradient-primary / navy sections) ---- */
+  --ondark-strong: #eaf1ff;
+  --ondark-body: #d7e3ff;
+  --ondark-muted: #b9c8f0;
+  --ondark-eyebrow: #cfe0ff;
 
   /* ---- Gradients ---- */
   --g-hero: radial-gradient(900px 520px at 85% -12%, #d9e8ff 0%, transparent 55%),
@@ -179,7 +186,7 @@ p {
   position: relative;
   overflow: hidden;
   background: var(--gradient-primary);
-  color: #eaf1ff;
+  color: var(--ondark-strong);
 }
 .section--dark > .blob {
   animation: float-y 9s ease-in-out infinite;
@@ -223,7 +230,7 @@ p {
   border-radius: var(--r-pill);
 }
 .section--dark .eyebrow {
-  color: #cfe0ff;
+  color: var(--ondark-eyebrow);
   background: rgba(255, 255, 255, 0.1);
 }
 

@@ -55,9 +55,25 @@ export function AuthProvider({ children }) {
 
   const resendVerification = useCallback(() => api.auth.resendVerification(), [])
 
+  const updateProfile = useCallback(async (payload) => {
+    const u = await api.auth.updateProfile(payload)
+    setUser(u)
+    return u
+  }, [])
+
   return (
     <AuthContext.Provider
-      value={{ user, ready, login, register, loginWithGoogle, logout, refresh, resendVerification }}
+      value={{
+        user,
+        ready,
+        login,
+        register,
+        loginWithGoogle,
+        logout,
+        refresh,
+        resendVerification,
+        updateProfile,
+      }}
     >
       {children}
     </AuthContext.Provider>

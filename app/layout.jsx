@@ -12,8 +12,10 @@ export const metadata = {
   },
 }
 
+// Mirrors --navy-900 from styles/base.css — meta[name=theme-color] can't
+// reference a CSS custom property, so the hex is duplicated here by hand.
 export const viewport = {
-  themeColor: '#06205c',
+  themeColor: '#152149',
 }
 
 export default function RootLayout({ children }) {
