@@ -15,30 +15,34 @@ export default function AuthForm({ mode }) {
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
 
-  const redirectTo = searchParams.get('redirect') || '/'
+  const explicitRedirect = searchParams.get('redirect')
+  const redirectTo = explicitRedirect || '/'
+  const resolveRedirect = (u) => explicitRedirect || (u.role === 'admin' ? '/admin' : '/')
   const update = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
   // Already logged in — this page is a dead end, bounce onward.
   useEffect(() => {
-    if (ready && user) router.replace(redirectTo)
-  }, [ready, user, redirectTo, router])
+    if (ready && user) router.replace(resolveRedirect(user))
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resolveRedirect is derived from searchParams already in deps via explicitRedirect
+  }, [ready, user, explicitRedirect, router])
 
   const onSubmit = async (e) => {
     e.preventDefault()
     setError(null)
     setBusy(true)
     try {
+      let u
       if (mode === 'login') {
-        await login({ email: form.email, password: form.password })
+        u = await login({ email: form.email, password: form.password })
       } else {
-        await register({
+        u = await register({
           name: form.name,
           email: form.email,
           phone: form.phone || undefined,
           password: form.password,
         })
       }
-      router.push(redirectTo)
+      router.push(resolveRedirect(u))
     } catch (err) {
       setError(err.message || 'Terjadi kesalahan. Coba lagi.')
     } finally {
@@ -121,7 +125,7 @@ export default function AuthForm({ mode }) {
         <span>atau</span>
       </div>
 
-      <GoogleSignInButton onError={setError} onSuccess={() => router.push(redirectTo)} />
+      <GoogleSignInButton onError={setError} onSuccess={(u) => router.push(resolveRedirect(u))} />
 
       <p className="auth-modal__switch">
         {mode === 'login' ? (

@@ -19,8 +19,8 @@ export default function GoogleSignInButton({ onError, onSuccess }) {
       client_id: CLIENT_ID,
       callback: async ({ credential }) => {
         try {
-          await loginWithGoogle(credential)
-          onSuccess?.()
+          const u = await loginWithGoogle(credential)
+          onSuccess?.(u)
         } catch (err) {
           onError?.(err.message || 'Login dengan Google gagal. Coba lagi.')
         }
