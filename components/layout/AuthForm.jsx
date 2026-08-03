@@ -28,7 +28,16 @@ export default function AuthForm({ mode }) {
 
   const explicitRedirect = searchParams.get('redirect')
   const redirectTo = explicitRedirect || '/'
-  const resolveRedirect = (u) => explicitRedirect || (u.role === 'admin' ? '/admin' : '/')
+  // Admin selalu diarahkan ke /admin, kecuali ?redirect= memang sudah menunjuk
+  // ke halaman admin tertentu (mis. AdminGuard mengirim balik ke halaman admin
+  // yang tadinya mau diakses) — supaya login admin dari halaman publik manapun
+  // (keranjang, produk, dst.) tidak malah nyangkut di halaman publik itu.
+  const resolveRedirect = (u) => {
+    if (u.role === 'admin') {
+      return explicitRedirect?.startsWith('/admin') ? explicitRedirect : '/admin'
+    }
+    return explicitRedirect || '/'
+  }
   const update = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
   // Already logged in — this page is a dead end, bounce onward.

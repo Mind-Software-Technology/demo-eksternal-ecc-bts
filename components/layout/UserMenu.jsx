@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
-import { FiUser, FiChevronDown, FiLogOut, FiAlertCircle, FiClock } from 'react-icons/fi'
+import { FiUser, FiChevronDown, FiLogOut, FiAlertCircle, FiClock, FiGrid } from 'react-icons/fi'
 import { useAuth } from '../../context/auth'
 
 /** Collapses the logged-in navbar state (name + verify prompt + logout) into one dropdown. */
@@ -69,6 +69,12 @@ export default function UserMenu() {
                 <FiAlertCircle />
                 {verifySent ? 'Link verifikasi terkirim' : 'Email belum diverifikasi — kirim ulang link'}
               </button>
+            )}
+
+            {user.role === 'admin' && (
+              <Link href="/admin" className="navbar__user-menu__link" onClick={() => setOpen(false)}>
+                <FiGrid /> Dashboard Admin
+              </Link>
             )}
 
             <Link href="/profil" className="navbar__user-menu__link" onClick={() => setOpen(false)}>
