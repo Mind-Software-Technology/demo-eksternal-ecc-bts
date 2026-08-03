@@ -3,13 +3,7 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import {
-  FiTrash2,
-  FiPlus,
-  FiMinus,
-  FiShoppingCart,
-  FiArrowRight,
-} from 'react-icons/fi'
+import { FiTrash2, FiShoppingCart, FiArrowRight } from 'react-icons/fi'
 import Page from '../../../components/layout/Page'
 import PageHero from '../../../components/sections/PageHero'
 import Reveal from '../../../components/ui/Reveal'
@@ -18,7 +12,7 @@ import { useAuth, loginUrl } from '../../../context/auth'
 import { formatIDR } from '../../../data/format'
 
 export default function Cart() {
-  const { detailed, total, count, setQty, removeItem } = useCart()
+  const { detailed, total, count, removeItem } = useCart()
   const { user, ready: authReady } = useAuth()
   const router = useRouter()
 
@@ -70,22 +64,8 @@ export default function Cart() {
                       </span>
                     </div>
                     <div className="cart-item__controls">
-                      <div className="qty-stepper">
-                        <button
-                          type="button"
-                          aria-label="Kurangi jumlah"
-                          onClick={() => setQty(it.cartItemId, it.qty - 1)}
-                        >
-                          <FiMinus />
-                        </button>
+                      <div className="qty-stepper qty-stepper--readonly" aria-label="Jumlah">
                         <span>{it.qty}</span>
-                        <button
-                          type="button"
-                          aria-label="Tambah jumlah"
-                          onClick={() => setQty(it.cartItemId, it.qty + 1)}
-                        >
-                          <FiPlus />
-                        </button>
                       </div>
                       <span className="cart-item__line">
                         {formatIDR(it.lineTotal)}

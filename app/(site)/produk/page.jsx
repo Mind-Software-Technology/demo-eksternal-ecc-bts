@@ -131,7 +131,7 @@ function ProductsContent() {
           ) : (
             <RevealGroup className="grid-products">
               {services.map((s) => (
-                <RevealItem key={s.id}>
+                <RevealItem key={s.id} className="product-card__wrap">
                   <article className="product-card" data-accent={s.accent}>
                     <Link
                       href={`/produk/${s.slug}`}

@@ -10,7 +10,12 @@ const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
 export default function GoogleSignInButton({ onError, onSuccess }) {
   const { loginWithGoogle } = useAuth()
   const buttonRef = useRef(null)
-  const [scriptReady, setScriptReady] = useState(false)
+  // Google Identity Services may already be loaded from a previous page (client-side
+  // navigation between /login and /daftar doesn't reinsert the <script>, so Next's
+  // Script `onLoad` — which only fires once per script tag — won't fire again here).
+  const [scriptReady, setScriptReady] = useState(
+    () => typeof window !== 'undefined' && !!window.google?.accounts?.id,
+  )
 
   useEffect(() => {
     if (!scriptReady || !CLIENT_ID || !window.google || !buttonRef.current) return
@@ -43,7 +48,7 @@ export default function GoogleSignInButton({ onError, onSuccess }) {
       <Script
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
-        onLoad={() => setScriptReady(true)}
+        onReady={() => setScriptReady(true)}
       />
       <div ref={buttonRef} className="google-signin-btn" />
     </>
