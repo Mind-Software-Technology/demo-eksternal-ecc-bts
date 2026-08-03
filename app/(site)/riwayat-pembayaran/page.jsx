@@ -143,7 +143,7 @@ export default function PaymentHistory() {
                               className="pay-record__result"
                               href={api.orders.resultUrl(o.order_no, it.id)}
                               target="_blank"
-                              rel="noopener noreferrer"
+                              rel="noopener"
                               title={it.result_original_name}
                             >
                               <FiDownload /> Hasil Siap — Unduh
@@ -154,7 +154,7 @@ export default function PaymentHistory() {
                               className="pay-record__attachment"
                               href={api.orders.attachmentUrl(o.order_no, it.id)}
                               target="_blank"
-                              rel="noopener noreferrer"
+                              rel="noopener"
                               title={it.attachment_original_name}
                             >
                               <FiUploadCloud /> File Saya
