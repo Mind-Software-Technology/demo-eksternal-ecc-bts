@@ -45,7 +45,7 @@ export default function Kegiatan() {
   )
 
   const renderCard = (e, isPast) => (
-    <RevealItem key={e.id}>
+    <RevealItem key={e.id} className="event-card__wrap">
       <article className="event-card" data-accent={e.category?.accent}>
         <div className="event-card__media">
           {e.flyer_url ? (

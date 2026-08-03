@@ -13,6 +13,9 @@ import {
   FiLock,
   FiCheckCircle,
   FiXCircle,
+  FiCopy,
+  FiCheck,
+  FiDownload,
 } from 'react-icons/fi'
 import { FaQrcode, FaUniversity, FaWallet, FaStore } from 'react-icons/fa'
 import Page from '../../components/layout/Page'
@@ -100,6 +103,7 @@ function PaymentInner() {
   const [error, setError] = useState(null)
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState(null)
+  const [copiedField, setCopiedField] = useState(null)
   const pollRef = useRef(null)
 
   const [dueAt] = useState(() => new Date(Date.now() + 24 * 60 * 60 * 1000))
@@ -236,6 +240,49 @@ function PaymentInner() {
   const isFailed = status && TERMINAL_FAIL.includes(status)
   const isCancelled = status === 'cancel'
 
+  const copyToClipboard = async (text, field) => {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      // Clipboard API unavailable (e.g. insecure context) — fall back to the
+      // classic hidden-textarea + execCommand trick.
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      try {
+        document.execCommand('copy')
+      } catch {
+        // Copy genuinely unsupported — the number stays visible for a manual copy.
+      }
+      ta.remove()
+    }
+    setCopiedField(field)
+    setTimeout(() => setCopiedField((f) => (f === field ? null : f)), 1500)
+  }
+
+  const downloadQr = async (url, orderNoForFile) => {
+    try {
+      const res = await fetch(url)
+      if (!res.ok) throw new Error('download failed')
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = objectUrl
+      a.download = `qris-${orderNoForFile}.png`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(objectUrl)
+    } catch {
+      // Cross-origin image without CORS headers — open it directly so the
+      // user can still save it manually (long-press / right-click).
+      window.open(url, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   const cancelOrder = async () => {
     setCancelling(true)
     setCancelError(null)
@@ -323,6 +370,13 @@ function PaymentInner() {
                   <span className="pay-qr__brand">{payment.payment_type?.toUpperCase()}</span>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={payment.qr_url} alt="Kode QR pembayaran" width={196} height={196} />
+                  <button
+                    type="button"
+                    className="btn btn--outline btn--sm"
+                    onClick={() => downloadQr(payment.qr_url, order.order_no)}
+                  >
+                    <FiDownload /> Unduh QR
+                  </button>
                 </div>
               )}
               {!payment.qr_url && payment.payment_type === 'qris' && (
@@ -334,13 +388,35 @@ function PaymentInner() {
               {payment.va_number && (
                 <div className="pay-va">
                   <span>No. Virtual Account ({payment.channel_detail || payment.payment_type})</span>
-                  <b>{payment.va_number}</b>
+                  <span className="pay-va__value">
+                    <b>{payment.va_number}</b>
+                    <button
+                      type="button"
+                      className="pay-copy-btn"
+                      aria-label="Salin nomor virtual account"
+                      onClick={() => copyToClipboard(payment.va_number, 'va')}
+                    >
+                      {copiedField === 'va' ? <FiCheck /> : <FiCopy />}
+                      {copiedField === 'va' ? 'Tersalin' : 'Salin'}
+                    </button>
+                  </span>
                 </div>
               )}
               {payment.payment_code && (
                 <div className="pay-va">
                   <span>Kode Pembayaran</span>
-                  <b>{payment.payment_code}</b>
+                  <span className="pay-va__value">
+                    <b>{payment.payment_code}</b>
+                    <button
+                      type="button"
+                      className="pay-copy-btn"
+                      aria-label="Salin kode pembayaran"
+                      onClick={() => copyToClipboard(payment.payment_code, 'code')}
+                    >
+                      {copiedField === 'code' ? <FiCheck /> : <FiCopy />}
+                      {copiedField === 'code' ? 'Tersalin' : 'Salin'}
+                    </button>
+                  </span>
                 </div>
               )}
               {payment.deeplink_url && (

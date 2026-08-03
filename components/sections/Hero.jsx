@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FiSearch, FiCheckCircle, FiCalendar, FiStar, FiClock } from 'react-icons/fi'
+import { FiSearch, FiCheckCircle, FiCalendar, FiStar, FiClock, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import { formatEventShortDate } from '../../data/format'
 import { api } from '../../lib/api'
 
@@ -54,13 +54,20 @@ export default function Hero() {
 
   const slides = eventSlides.length > 0 ? eventSlides : [FALLBACK_SLIDE]
 
+  // Auto-advance stays on; restarting the timer on `slideIndex` means a manual
+  // pick (below) also gets a full interval before the next auto-advance,
+  // instead of being cut short by whatever was already in flight.
   useEffect(() => {
     if (slides.length < 2) return undefined
     const id = setInterval(() => {
       setSlideIndex((i) => (i + 1) % slides.length)
     }, SLIDE_INTERVAL_MS)
     return () => clearInterval(id)
-  }, [slides.length])
+  }, [slides.length, slideIndex])
+
+  const goToSlide = (i) => setSlideIndex(((i % slides.length) + slides.length) % slides.length)
+  const goToPrevSlide = () => goToSlide(slideIndex - 1)
+  const goToNextSlide = () => goToSlide(slideIndex + 1)
 
   const activeSlide = slides[slideIndex % slides.length]
   const isEventSlide = eventSlides.length > 0
@@ -200,14 +207,41 @@ export default function Hero() {
                   transition={{ duration: 0.7, ease: 'easeInOut' }}
                 />
               </AnimatePresence>
-              {slides.length > 1 && (
-                <span className="hero__media-dots" aria-hidden="true">
+            </Link>
+
+            {slides.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="hero__media-nav hero__media-nav--prev"
+                  aria-label="Gambar sebelumnya"
+                  onClick={goToPrevSlide}
+                >
+                  <FiChevronLeft />
+                </button>
+                <button
+                  type="button"
+                  className="hero__media-nav hero__media-nav--next"
+                  aria-label="Gambar berikutnya"
+                  onClick={goToNextSlide}
+                >
+                  <FiChevronRight />
+                </button>
+
+                <span className="hero__media-dots">
                   {slides.map((s, i) => (
-                    <span key={s.src} className={i === slideIndex ? 'is-active' : ''} />
+                    <button
+                      key={s.src}
+                      type="button"
+                      className={i === slideIndex ? 'is-active' : ''}
+                      aria-label={`Tampilkan gambar ${i + 1}`}
+                      aria-current={i === slideIndex}
+                      onClick={() => goToSlide(i)}
+                    />
                   ))}
                 </span>
-              )}
-            </Link>
+              </>
+            )}
           </div>
 
           <div className="hero__media-badge hero__media-badge--rating">
