@@ -16,19 +16,41 @@ const STATUS_LABEL = {
   expired: 'Kedaluwarsa',
 }
 
+// Harus selaras dengan validasi backend (Admin\OrderController::uploadResult).
+const RESULT_ALLOWED_EXTENSIONS = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png']
+const RESULT_MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10 MB, sama dengan max:10240 di backend
+
 function ResultCell({ order, item, onUploaded }) {
   const inputRef = useRef(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
 
   const onPick = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
-    setBusy(true)
+
     setError(null)
+    setSuccess(null)
+
+    const extension = file.name.split('.').pop()?.toLowerCase()
+    if (!RESULT_ALLOWED_EXTENSIONS.includes(extension)) {
+      setError(`Tipe file .${extension} tidak didukung. Gunakan: ${RESULT_ALLOWED_EXTENSIONS.join(', ')}.`)
+      return
+    }
+    if (file.size > RESULT_MAX_SIZE_BYTES) {
+      setError('Ukuran file maksimal 10 MB.')
+      return
+    }
+    if (item.has_result && !window.confirm(`Hasil sebelumnya (${item.result_original_name}) akan diganti dan dihapus permanen. Lanjutkan?`)) {
+      return
+    }
+
+    setBusy(true)
     try {
       await api.admin.orders.uploadResult(order.order_no, item.id, file)
+      setSuccess(item.has_result ? 'Hasil berhasil diperbarui.' : 'Hasil berhasil diunggah.')
       onUploaded()
     } catch (err) {
       setError(err.message || 'Gagal mengunggah hasil.')
@@ -49,6 +71,7 @@ function ResultCell({ order, item, onUploaded }) {
       </button>
       <input ref={inputRef} type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" hidden onChange={onPick} />
       {error && <span className="admin-form-error admin-form-error--inline">{error}</span>}
+      {success && <span className="admin-form-success admin-form-success--inline">{success}</span>}
     </div>
   )
 }
