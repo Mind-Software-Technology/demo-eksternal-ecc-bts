@@ -168,11 +168,15 @@ export default function PaymentHistory() {
     setCancelError(null)
     try {
       await api.payments.cancel(orderNo)
-      const { items } = await api.orders.list()
-      setOrders(items)
     } catch (e) {
       setCancelError(e.message || 'Gagal membatalkan pesanan.')
     } finally {
+      // Refresh regardless of outcome — a failed cancel can still have synced
+      // the order to its real (e.g. already-expired) status behind the scenes.
+      try {
+        const { items } = await api.orders.list()
+        setOrders(items)
+      } catch { /* keep showing the previous list if this refetch also fails */ }
       setCancellingNo(null)
     }
   }
