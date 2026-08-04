@@ -47,6 +47,66 @@ function StatusBadge({ status }) {
   )
 }
 
+function TestimonialForm({ order, onSubmitted }) {
+  const [open, setOpen] = useState(false)
+  const [role, setRole] = useState('')
+  const [text, setText] = useState('')
+  const [rating, setRating] = useState(5)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    try {
+      await api.orders.submitTestimonial(order.order_no, { role, text, rating: Number(rating) })
+      onSubmitted()
+    } catch (err) {
+      setError(err.message || 'Gagal mengirim testimoni.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (!open) {
+    return (
+      <button type="button" className="btn btn--outline btn--sm pay-record__review-btn" onClick={() => setOpen(true)}>
+        Beri Testimoni
+      </button>
+    )
+  }
+
+  return (
+    <form onSubmit={submit} className="testimonial-form">
+      <input
+        value={role}
+        onChange={(e) => setRole(e.target.value)}
+        placeholder="Peran Anda (mis. Mahasiswa S1)"
+        required
+      />
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Ceritakan pengalaman Anda menggunakan layanan ini…"
+        rows={3}
+        required
+      />
+      <select value={rating} onChange={(e) => setRating(e.target.value)}>
+        {[5, 4, 3, 2, 1].map((n) => (
+          <option key={n} value={n}>
+            {n} bintang
+          </option>
+        ))}
+      </select>
+      {error && <p className="admin-form-error admin-form-error--inline">{error}</p>}
+      <button type="submit" className="btn btn--primary btn--sm" disabled={busy}>
+        {busy ? 'Mengirim…' : 'Kirim Testimoni'}
+      </button>
+    </form>
+  )
+}
+
 export default function PaymentHistory() {
   const { user, ready } = useAuth()
   const router = useRouter()
@@ -172,6 +232,11 @@ export default function PaymentHistory() {
                       Total <b>{formatIDR(o.total)}</b>
                     </span>
                   </div>
+
+                  {o.can_review && (
+                    <TestimonialForm order={o} onSubmitted={() => api.orders.list().then(({ items }) => setOrders(items))} />
+                  )}
+                  {o.has_testimonial && <p className="pay-record__thanks">Terima kasih atas testimoni Anda.</p>}
 
                   {o.status === 'awaiting_payment' && (
                     <button
