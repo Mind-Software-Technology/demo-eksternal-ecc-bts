@@ -67,8 +67,33 @@ function QrisFallback({ seed = 'ECC-BTS', size = 196 }) {
   )
 }
 
-const BANKS = ['bca', 'bni', 'bri', 'permata']
-const STORES = ['indomaret', 'alfamart']
+const BANKS = [
+  { id: 'bca', label: 'BCA', logo: '/banks/bca.svg' },
+  { id: 'bni', label: 'BNI', logo: '/banks/bni.svg' },
+  { id: 'bri', label: 'BRI', logo: '/banks/bri.svg' },
+  { id: 'permata', label: 'Permata', logo: '/banks/permata.svg' },
+]
+const EWALLETS = [
+  { id: 'gopay', label: 'GoPay', logo: '/banks/gopay.svg' },
+  { id: 'shopeepay', label: 'ShopeePay', logo: '/banks/shopeepay.svg' },
+]
+const STORES = [
+  { id: 'indomaret', label: 'Indomaret', logo: '/banks/indomaret.svg' },
+  { id: 'alfamart', label: 'Alfamart', logo: '/banks/alfamart.svg' },
+]
+
+function BrandBadge({ logo, label }) {
+  return (
+    <span className="pay-brand-badge">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static local SVG, no need for next/image sizing */}
+      <img src={logo} alt={label} />
+    </span>
+  )
+}
+
+const ALL_BRANDS = Object.fromEntries(
+  [...BANKS, ...EWALLETS, ...STORES].map((b) => [b.id, b]),
+)
 
 const METHODS = [
   { id: 'qris', label: 'QRIS', desc: 'Scan via semua bank & e-wallet', icon: FaQrcode },
@@ -387,7 +412,12 @@ function PaymentInner() {
               )}
               {payment.va_number && (
                 <div className="pay-va">
-                  <span>No. Virtual Account ({payment.channel_detail || payment.payment_type})</span>
+                  <span className="pay-va__label">
+                    {ALL_BRANDS[payment.channel_detail] && (
+                      <BrandBadge {...ALL_BRANDS[payment.channel_detail]} />
+                    )}
+                    No. Virtual Account ({payment.channel_detail || payment.payment_type})
+                  </span>
                   <span className="pay-va__value">
                     <b>{payment.va_number}</b>
                     <button
@@ -404,7 +434,12 @@ function PaymentInner() {
               )}
               {payment.payment_code && (
                 <div className="pay-va">
-                  <span>Kode Pembayaran</span>
+                  <span className="pay-va__label">
+                    {ALL_BRANDS[payment.channel_detail] && (
+                      <BrandBadge {...ALL_BRANDS[payment.channel_detail]} />
+                    )}
+                    Kode Pembayaran
+                  </span>
                   <span className="pay-va__value">
                     <b>{payment.payment_code}</b>
                     <button
@@ -536,13 +571,14 @@ function PaymentInner() {
                             {BANKS.map((b) => (
                               <button
                                 type="button"
-                                key={b}
-                                className="pay-chip"
-                                aria-pressed={bank === b}
-                                style={bank === b ? { background: 'var(--blue-600)', color: '#fff' } : undefined}
-                                onClick={() => setBank(b)}
+                                key={b.id}
+                                className={`pay-chip ${bank === b.id ? 'is-selected' : ''}`}
+                                aria-pressed={bank === b.id}
+                                onClick={() => setBank(b.id)}
                               >
-                                {b.toUpperCase()}
+                                <BrandBadge logo={b.logo} label={b.label} />
+                                {b.label}
+                                {bank === b.id && <FiCheck className="pay-chip__check" />}
                               </button>
                             ))}
                           </div>
@@ -553,19 +589,17 @@ function PaymentInner() {
                         <div className="pay-static">
                           <p>Pilih e-wallet:</p>
                           <div className="pay-chips">
-                            {[
-                              { id: 'gopay', label: 'GoPay' },
-                              { id: 'shopeepay', label: 'ShopeePay' },
-                            ].map((w) => (
+                            {EWALLETS.map((w) => (
                               <button
                                 type="button"
                                 key={w.id}
-                                className="pay-chip"
+                                className={`pay-chip ${ewallet === w.id ? 'is-selected' : ''}`}
                                 aria-pressed={ewallet === w.id}
-                                style={ewallet === w.id ? { background: 'var(--blue-600)', color: '#fff' } : undefined}
                                 onClick={() => setEwallet(w.id)}
                               >
+                                <BrandBadge logo={w.logo} label={w.label} />
                                 {w.label}
+                                {ewallet === w.id && <FiCheck className="pay-chip__check" />}
                               </button>
                             ))}
                           </div>
@@ -579,13 +613,14 @@ function PaymentInner() {
                             {STORES.map((s) => (
                               <button
                                 type="button"
-                                key={s}
-                                className="pay-chip"
-                                aria-pressed={store === s}
-                                style={store === s ? { background: 'var(--blue-600)', color: '#fff' } : undefined}
-                                onClick={() => setStore(s)}
+                                key={s.id}
+                                className={`pay-chip ${store === s.id ? 'is-selected' : ''}`}
+                                aria-pressed={store === s.id}
+                                onClick={() => setStore(s.id)}
                               >
-                                {s === 'indomaret' ? 'Indomaret' : 'Alfamart'}
+                                <BrandBadge logo={s.logo} label={s.label} />
+                                {s.label}
+                                {store === s.id && <FiCheck className="pay-chip__check" />}
                               </button>
                             ))}
                           </div>

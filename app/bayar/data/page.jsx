@@ -3,13 +3,12 @@
 import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { FiGlobe, FiArrowLeft, FiArrowRight, FiFileText, FiXCircle } from 'react-icons/fi'
+import { FiGlobe, FiArrowLeft, FiArrowRight, FiXCircle } from 'react-icons/fi'
 import Page from '../../../components/layout/Page'
 import BrandMark from '../../../components/layout/BrandMark'
 import CheckoutSteps from '../../../components/layout/CheckoutSteps'
 import { useCart } from '../../../context/cart'
 import { useAuth, loginUrl } from '../../../context/auth'
-import { formatIDR } from '../../../data/format'
 import { api } from '../../../lib/api'
 import { setCachedOrder } from '../../../lib/checkoutOrderCache'
 
@@ -26,7 +25,7 @@ function OrdererDataInner() {
   const editOrderNo = searchParams.get('order_no')
   const isEdit = Boolean(editOrderNo)
 
-  const { detailed, total, ready } = useCart()
+  const { detailed, ready } = useCart()
   const { user, ready: authReady } = useAuth()
   const router = useRouter()
 
@@ -35,7 +34,7 @@ function OrdererDataInner() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
-  const [order, setOrder] = useState(null)
+  const [, setOrder] = useState(null)
   const [orderLoading, setOrderLoading] = useState(isEdit)
   const [orderError, setOrderError] = useState(null)
 
@@ -60,23 +59,6 @@ function OrdererDataInner() {
       cancelled = true
     }
   }, [isEdit, editOrderNo, user])
-
-  const items = isEdit
-    ? (order?.items || []).map((it) => ({
-        serviceId: it.service_id,
-        title: it.title_snapshot,
-        qty: it.qty,
-        lineTotal: it.line_total,
-      }))
-    : detailed
-  const orderTotal = isEdit ? order?.total ?? 0 : total
-
-  const description =
-    items.length === 0
-      ? 'Pembayaran layanan ECC-BTS'
-      : items.length === 1
-        ? `Pembayaran untuk ${items[0].title}`
-        : `Pembayaran untuk ${items.length} layanan (${items[0].title}, dll.)`
 
   // Checkout is account-only — bounce a logged-out visitor to login.
   useEffect(() => {
@@ -161,7 +143,7 @@ function OrdererDataInner() {
 
   return (
     <Page title={isEdit ? 'Ubah Data Pemesan — ECC-BTS' : 'Data Pemesan — ECC-BTS'}>
-      <form className="pay-page" onSubmit={submit}>
+      <form className="pay-page pay-page--single" onSubmit={submit}>
         {/* ---------------------------------------------------- main column */}
         <div className="pay-main">
           <header className="pay-head">
@@ -247,35 +229,6 @@ function OrdererDataInner() {
             <FiArrowLeft /> {isEdit ? 'Batal, kembali ke pembayaran' : 'Kembali ke keranjang'}
           </Link>
         </div>
-
-        {/* ------------------------------------------------- summary column */}
-        <aside className="pay-summary">
-          <h3>Ringkasan Pesanan</h3>
-
-          <div className="pay-summary__block">
-            <span className="pay-summary__head">
-              <FiFileText /> Deskripsi
-            </span>
-            <p>{description}</p>
-          </div>
-
-          <ul className="pay-summary__items">
-            {items.map((it) => (
-              <li key={it.serviceId}>
-                <span>
-                  {it.title}
-                  {it.qty > 1 && <em> × {it.qty}</em>}
-                </span>
-                <b>{formatIDR(it.lineTotal)}</b>
-              </li>
-            ))}
-          </ul>
-
-          <div className="pay-summary__total">
-            <span>Total Tagihan</span>
-            <strong>{formatIDR(orderTotal)}</strong>
-          </div>
-        </aside>
       </form>
     </Page>
   )

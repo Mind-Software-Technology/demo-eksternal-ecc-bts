@@ -48,6 +48,9 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try {
       await api.auth.logout()
+    } catch {
+      // Session already gone server-side (expired/invalid cookie) — logging
+      // out locally still succeeds, nothing left to revoke.
     } finally {
       setUser(null)
     }
