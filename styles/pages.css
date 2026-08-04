@@ -1985,6 +1985,35 @@
   margin-left: 0.4rem;
 }
 
+.pay-record__review-btn {
+  margin-top: 0.9rem;
+}
+
+.pay-record__thanks {
+  margin: 0.9rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.testimonial-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
+.testimonial-form input,
+.testimonial-form textarea,
+.testimonial-form select {
+  width: 100%;
+}
+
+.testimonial-form button {
+  align-self: flex-start;
+}
+
 @media (max-width: 900px) {
   .pay-page {
     grid-template-columns: 1fr;
