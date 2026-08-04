@@ -19,6 +19,7 @@ import Reveal from '../../../components/ui/Reveal'
 import { formatIDR } from '../../../data/format'
 import { useAuth, loginUrl } from '../../../context/auth'
 import { api } from '../../../lib/api'
+import { setCachedOrder } from '../../../lib/checkoutOrderCache'
 
 const fmtDate = (iso) =>
   new Intl.DateTimeFormat('id-ID', {
@@ -30,6 +31,8 @@ const fmtDate = (iso) =>
   }).format(new Date(iso))
 
 const STATUS_LABEL = {
+  awaiting_quote: 'Menunggu Penawaran Harga',
+  quoted: 'Menunggu Persetujuan',
   pending: 'Menunggu',
   awaiting_payment: 'Menunggu Pembayaran',
   paid: 'Berhasil',
@@ -38,9 +41,11 @@ const STATUS_LABEL = {
   expired: 'Kedaluwarsa',
 }
 
+const CLOCK_STATUSES = ['awaiting_payment', 'pending', 'awaiting_quote', 'quoted']
+
 function StatusBadge({ status }) {
   const ok = status === 'paid'
-  const Icon = ok ? FiCheckCircle : status === 'awaiting_payment' || status === 'pending' ? FiClock : FiXCircle
+  const Icon = ok ? FiCheckCircle : CLOCK_STATUSES.includes(status) ? FiClock : FiXCircle
   return (
     <span className={`pay-status ${ok ? 'pay-status--ok' : ''}`}>
       <Icon /> {STATUS_LABEL[status] || status}
@@ -145,6 +150,9 @@ export default function PaymentHistory() {
   const [loading, setLoading] = useState(false)
   const [cancellingNo, setCancellingNo] = useState(null)
   const [cancelError, setCancelError] = useState(null)
+  const [acceptingNo, setAcceptingNo] = useState(null)
+  const [decliningNo, setDecliningNo] = useState(null)
+  const [quoteError, setQuoteError] = useState(null)
 
   // Orders are account-only — bounce a logged-out visitor to login.
   useEffect(() => {
@@ -178,6 +186,35 @@ export default function PaymentHistory() {
         setOrders(items)
       } catch { /* keep showing the previous list if this refetch also fails */ }
       setCancellingNo(null)
+    }
+  }
+
+  const acceptQuote = async (order) => {
+    setAcceptingNo(order.order_no)
+    setQuoteError(null)
+    try {
+      const updated = await api.orders.acceptQuote(order.order_no)
+      setCachedOrder(updated)
+      router.push(`/bayar?order_no=${encodeURIComponent(order.order_no)}`)
+    } catch (e) {
+      setQuoteError(e.message || 'Gagal menyetujui penawaran.')
+      setAcceptingNo(null)
+    }
+  }
+
+  const declineQuote = async (orderNo) => {
+    setDecliningNo(orderNo)
+    setQuoteError(null)
+    try {
+      await api.orders.declineQuote(orderNo)
+    } catch (e) {
+      setQuoteError(e.message || 'Gagal membatalkan permintaan.')
+    } finally {
+      try {
+        const { items } = await api.orders.list()
+        setOrders(items)
+      } catch { /* keep showing the previous list if this refetch also fails */ }
+      setDecliningNo(null)
     }
   }
 
@@ -254,7 +291,7 @@ export default function PaymentHistory() {
                               <FiUploadCloud /> File Saya
                             </a>
                           )}
-                          <b>{formatIDR(it.line_total)}</b>
+                          <b>{it.line_total != null ? formatIDR(it.line_total) : '—'}</b>
                         </span>
                       </li>
                     ))}
@@ -263,9 +300,48 @@ export default function PaymentHistory() {
                   <div className="pay-record__foot">
                     <span className="pay-record__method">Order #{o.order_no}</span>
                     <span className="pay-record__total">
-                      Total <b>{formatIDR(o.total)}</b>
+                      Total <b>{o.total != null ? formatIDR(o.total) : 'Menunggu penawaran'}</b>
                     </span>
                   </div>
+
+                  {quoteError && <p className="auth-modal__error">{quoteError}</p>}
+
+                  {o.status === 'awaiting_quote' && (
+                    <div className="pay-record__quote-actions">
+                      <p className="pay-record__note">
+                        Menunggu penawaran harga dari admin. Kami akan memberi tahu Anda setelah harga ditentukan.
+                      </p>
+                      <button
+                        type="button"
+                        className="btn btn--outline btn--sm"
+                        onClick={() => declineQuote(o.order_no)}
+                        disabled={decliningNo === o.order_no}
+                      >
+                        {decliningNo === o.order_no ? 'Memproses…' : 'Batalkan Permintaan'}
+                      </button>
+                    </div>
+                  )}
+
+                  {o.status === 'quoted' && (
+                    <div className="pay-record__quote-actions">
+                      <button
+                        type="button"
+                        className="btn btn--primary btn--sm"
+                        onClick={() => acceptQuote(o)}
+                        disabled={acceptingNo === o.order_no}
+                      >
+                        {acceptingNo === o.order_no ? 'Memproses…' : 'Setuju & Bayar'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--outline btn--sm"
+                        onClick={() => declineQuote(o.order_no)}
+                        disabled={decliningNo === o.order_no}
+                      >
+                        {decliningNo === o.order_no ? 'Memproses…' : 'Tolak Penawaran'}
+                      </button>
+                    </div>
+                  )}
 
                   {o.can_review && (
                     <TestimonialForm order={o} onSubmitted={() => api.orders.list().then(({ items }) => setOrders(items))} />

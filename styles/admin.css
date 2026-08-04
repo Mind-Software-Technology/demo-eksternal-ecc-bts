@@ -556,6 +556,29 @@
   font-size: 0.85rem;
 }
 
+.admin-attachment-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+}
+
+.admin-price-input {
+  width: 120px;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+
+.admin-quote-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
 .admin-upload-btn {
   display: inline-flex;
   align-items: center;

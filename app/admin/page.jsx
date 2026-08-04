@@ -15,6 +15,8 @@ const STAT_ICON = {
 }
 
 const STATUS_LABEL = {
+  awaiting_quote: 'Menunggu Penawaran',
+  quoted: 'Menunggu Persetujuan',
   pending: 'Menunggu',
   awaiting_payment: 'Menunggu Pembayaran',
   paid: 'Berhasil',
@@ -27,6 +29,8 @@ const STATUS_BADGE = {
   paid: 'admin-badge--success',
   pending: 'admin-badge--warning',
   awaiting_payment: 'admin-badge--warning',
+  awaiting_quote: 'admin-badge--warning',
+  quoted: 'admin-badge--warning',
   failed: 'admin-badge--danger',
   cancelled: 'admin-badge--danger',
   expired: 'admin-badge--danger',
@@ -167,7 +171,7 @@ export default function AdminDashboard() {
                     <span>{o.guest_name}</span>
                   </div>
                   <div className="admin-recent-list__side">
-                    <b>{formatIDR(o.total)}</b>
+                    <b>{o.total != null ? formatIDR(o.total) : '—'}</b>
                     <span className={`admin-badge ${STATUS_BADGE[o.status] || ''}`}>
                       {STATUS_LABEL[o.status] || o.status}
                     </span>

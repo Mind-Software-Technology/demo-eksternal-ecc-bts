@@ -6,6 +6,8 @@ import { api } from '../../../lib/api'
 import { formatIDR } from '../../../data/format'
 
 const STATUS_LABEL = {
+  awaiting_quote: 'Menunggu Penawaran',
+  quoted: 'Menunggu Persetujuan',
   pending: 'Menunggu',
   awaiting_payment: 'Menunggu Pembayaran',
   paid: 'Berhasil',
@@ -90,7 +92,7 @@ export default function AdminOrdersPage() {
                       <span className="admin-table__muted">{o.guest_email}</span>
                     </td>
                     <td>{STATUS_LABEL[o.status] || o.status}</td>
-                    <td>{formatIDR(o.total)}</td>
+                    <td>{o.total != null ? formatIDR(o.total) : '—'}</td>
                     <td>{fmtDate(o.created_at)}</td>
                   </tr>
                 ))}
