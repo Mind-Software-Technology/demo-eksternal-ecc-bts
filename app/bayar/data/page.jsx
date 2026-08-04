@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { FiGlobe, FiArrowLeft, FiArrowRight, FiXCircle } from 'react-icons/fi'
+import { FiGlobe, FiArrowLeft, FiArrowRight, FiXCircle, FiFileText } from 'react-icons/fi'
 import Page from '../../../components/layout/Page'
 import BrandMark from '../../../components/layout/BrandMark'
 import CheckoutSteps from '../../../components/layout/CheckoutSteps'
@@ -11,6 +11,12 @@ import { useCart } from '../../../context/cart'
 import { useAuth, loginUrl } from '../../../context/auth'
 import { api } from '../../../lib/api'
 import { setCachedOrder } from '../../../lib/checkoutOrderCache'
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 /**
  * Checkout step 1 — collect orderer info + attachments, then create the
@@ -31,8 +37,21 @@ function OrdererDataInner() {
 
   const [guest, setGuest] = useState({ guest_name: '', guest_phone: '' })
   const [files, setFiles] = useState({})
+  const [previewUrls, setPreviewUrls] = useState({})
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+
+  // Image thumbnails for the file preview — one object URL per picked image,
+  // revoked whenever the selection changes so they don't leak.
+  useEffect(() => {
+    const urls = {}
+    Object.entries(files).forEach(([serviceId, file]) => {
+      if (file && file.type.startsWith('image/')) urls[serviceId] = URL.createObjectURL(file)
+    })
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- object URLs are an external browser resource created/revoked here, not derivable state
+    setPreviewUrls(urls)
+    return () => Object.values(urls).forEach((url) => URL.revokeObjectURL(url))
+  }, [files])
 
   const [, setOrder] = useState(null)
   const [orderLoading, setOrderLoading] = useState(isEdit)
@@ -128,12 +147,11 @@ function OrdererDataInner() {
         setCachedOrder(updated)
         router.push(`/bayar?order_no=${encodeURIComponent(editOrderNo)}`)
       } else {
-        const created = await api.orders.create(
+        await api.orders.create(
           { guest_name: guest.guest_name, guest_phone: guest.guest_phone },
           files,
         )
-        setCachedOrder(created)
-        router.push(`/bayar?order_no=${encodeURIComponent(created.order_no)}`)
+        router.push('/riwayat-pembayaran')
       }
     } catch (err) {
       setError(err.message || 'Gagal menyimpan data pemesan. Coba lagi.')
@@ -200,6 +218,7 @@ function OrdererDataInner() {
                     {!it.requiresAttachment && ' (opsional)'}
                   </label>
                   <input
+                    key={files[it.serviceId] ? 'picked' : 'empty'}
                     id={`file-${it.serviceId}`}
                     type="file"
                     required={it.requiresAttachment}
@@ -208,6 +227,26 @@ function OrdererDataInner() {
                       setFiles((f) => ({ ...f, [it.serviceId]: e.target.files?.[0] || null }))
                     }
                   />
+                  {files[it.serviceId] && (
+                    <div className="file-preview">
+                      {previewUrls[it.serviceId] ? (
+                        <img src={previewUrls[it.serviceId]} alt="" className="file-preview__thumb" />
+                      ) : (
+                        <FiFileText className="file-preview__ic" />
+                      )}
+                      <div className="file-preview__meta">
+                        <span className="file-preview__name">{files[it.serviceId].name}</span>
+                        <span className="file-preview__size">{formatFileSize(files[it.serviceId].size)}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="file-preview__clear"
+                        onClick={() => setFiles((f) => ({ ...f, [it.serviceId]: null }))}
+                      >
+                        <FiXCircle /> Ganti File
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </>

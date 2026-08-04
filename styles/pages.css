@@ -579,6 +579,61 @@
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--soft);
+  border-radius: var(--r-sm);
+}
+.file-preview__thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  flex-shrink: 0;
+}
+.file-preview__ic {
+  width: 40px;
+  height: 40px;
+  padding: 0.6rem;
+  flex-shrink: 0;
+  color: var(--blue-600);
+  background: var(--blue-100);
+  border-radius: var(--r-sm);
+  box-sizing: border-box;
+}
+.file-preview__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.file-preview__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-preview__size {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.file-preview__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: none;
+  color: var(--color-danger);
+  font-size: 0.82rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
 .form__note {
   font-size: 0.82rem;
   color: var(--muted);
@@ -1993,6 +2048,22 @@
   margin: 0.9rem 0 0;
   font-size: 0.85rem;
   color: var(--muted);
+}
+
+.pay-record__note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.pay-record__quote-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
 }
 
 .testimonial-form {
