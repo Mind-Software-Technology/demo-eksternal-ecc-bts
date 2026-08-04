@@ -1,5 +1,6 @@
 import AdminGuard from '../../components/admin/AdminGuard'
 import AdminSidebar from '../../components/admin/AdminSidebar'
+import AdminTopbar from '../../components/admin/AdminTopbar'
 
 export const metadata = {
   title: 'Admin — ECC-BTS',
@@ -11,7 +12,10 @@ export default function AdminLayout({ children }) {
     <AdminGuard>
       <div className="admin-shell">
         <AdminSidebar />
-        <main className="admin-main">{children}</main>
+        <div className="admin-content">
+          <AdminTopbar />
+          <main className="admin-main">{children}</main>
+        </div>
       </div>
     </AdminGuard>
   )

@@ -2,8 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { FiUsers, FiCheckCircle, FiStar, FiHeadphones, FiClock, FiMail } from 'react-icons/fi'
 import { api } from '../../lib/api'
 import { formatIDR } from '../../data/format'
+import RevenueChart from '../../components/admin/RevenueChart'
+
+const STAT_ICON = {
+  klien_terlayani: FiUsers,
+  order_selesai: FiCheckCircle,
+  rating_kepuasan: FiStar,
+  respon_cepat: FiHeadphones,
+}
 
 const STATUS_LABEL = {
   pending: 'Menunggu',
@@ -31,9 +40,12 @@ export default function AdminDashboard() {
   const [opsCounts, setOpsCounts] = useState(null)
   const [recentOrders, setRecentOrders] = useState(null)
   const [recentMessages, setRecentMessages] = useState(null)
+  const [revenue, setRevenue] = useState(null)
 
   useEffect(() => {
     api.stats.list().then(setStats).catch(() => setStats([]))
+
+    api.admin.analytics.revenue().then(setRevenue).catch(() => setRevenue([]))
 
     api.admin.orders
       .list({ limit: 5 })
@@ -63,31 +75,75 @@ export default function AdminDashboard() {
       </div>
 
       <div className="admin-stat-grid">
-        {(stats || []).map((s) => (
-          <div className="admin-stat-card" key={s.id}>
-            <span className="admin-stat-card__value">
-              {s.value}
-              {s.suffix}
-            </span>
-            <span className="admin-stat-card__label">{s.label}</span>
-          </div>
-        ))}
+        {(stats || []).map((s) => {
+          const Icon = STAT_ICON[s.id] || FiStar
+          return (
+            <div className="admin-stat-card" key={s.id}>
+              <div className="admin-stat-card__body">
+                <span className="admin-stat-card__value">
+                  {s.value}
+                  {s.suffix}
+                </span>
+                <span className="admin-stat-card__label">{s.label}</span>
+              </div>
+              <span className="admin-stat-card__icon">
+                <Icon />
+              </span>
+            </div>
+          )
+        })}
         {stats === null && <p className="empty-note">Memuat statistik…</p>}
       </div>
 
       <h2 className="admin-section-title">Ringkasan Operasional</h2>
       <div className="admin-stat-grid">
         <div className="admin-stat-card admin-stat-card--orange">
-          <span className="admin-stat-card__value">{opsCounts?.pending ?? '—'}</span>
-          <span className="admin-stat-card__label">Pesanan Menunggu</span>
+          <div className="admin-stat-card__body">
+            <span className="admin-stat-card__value">{opsCounts?.pending ?? '—'}</span>
+            <span className="admin-stat-card__label">Pesanan Menunggu</span>
+          </div>
+          <span className="admin-stat-card__icon">
+            <FiClock />
+          </span>
         </div>
         <div className="admin-stat-card admin-stat-card--green">
-          <span className="admin-stat-card__value">{opsCounts?.paid ?? '—'}</span>
-          <span className="admin-stat-card__label">Pesanan Berhasil</span>
+          <div className="admin-stat-card__body">
+            <span className="admin-stat-card__value">{opsCounts?.paid ?? '—'}</span>
+            <span className="admin-stat-card__label">Pesanan Berhasil</span>
+          </div>
+          <span className="admin-stat-card__icon">
+            <FiCheckCircle />
+          </span>
         </div>
         <div className="admin-stat-card admin-stat-card--indigo">
-          <span className="admin-stat-card__value">{opsCounts?.messages ?? '—'}</span>
-          <span className="admin-stat-card__label">Pesan Kontak</span>
+          <div className="admin-stat-card__body">
+            <span className="admin-stat-card__value">{opsCounts?.messages ?? '—'}</span>
+            <span className="admin-stat-card__label">Pesan Kontak</span>
+          </div>
+          <span className="admin-stat-card__icon">
+            <FiMail />
+          </span>
+        </div>
+      </div>
+
+      <h2 className="admin-section-title">Pendapatan 12 Bulan Terakhir</h2>
+      <div className="admin-dashboard-grid">
+        <div className="admin-widget admin-widget--chart">
+          <div className="admin-widget__head">
+            <h2>Tren Pendapatan</h2>
+            {revenue?.length > 0 && (
+              <span className="admin-table__muted">
+                Total: <b>{formatIDR(revenue.reduce((sum, r) => sum + r.revenue, 0))}</b>
+              </span>
+            )}
+          </div>
+          {revenue === null ? (
+            <p className="empty-note">Memuat grafik…</p>
+          ) : revenue.every((r) => r.revenue === 0) ? (
+            <p className="empty-note">Belum ada transaksi berhasil.</p>
+          ) : (
+            <RevenueChart data={revenue} />
+          )}
         </div>
       </div>
 
