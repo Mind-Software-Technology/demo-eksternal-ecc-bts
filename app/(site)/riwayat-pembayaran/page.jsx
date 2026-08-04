@@ -11,6 +11,7 @@ import {
   FiFileText,
   FiDownload,
   FiUploadCloud,
+  FiStar,
 } from 'react-icons/fi'
 import Page from '../../../components/layout/Page'
 import PageHero from '../../../components/sections/PageHero'
@@ -47,6 +48,30 @@ function StatusBadge({ status }) {
   )
 }
 
+function StarPicker({ value, onChange }) {
+  const [hover, setHover] = useState(0)
+  const shown = hover || value
+  return (
+    <div className="star-picker" role="radiogroup" aria-label="Rating bintang">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          role="radio"
+          aria-checked={value === n}
+          aria-label={`${n} bintang`}
+          className={`star-picker__star ${n <= shown ? 'is-on' : ''}`}
+          onMouseEnter={() => setHover(n)}
+          onMouseLeave={() => setHover(0)}
+          onClick={() => onChange(n)}
+        >
+          <FiStar />
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function TestimonialForm({ order, onSubmitted }) {
   const [open, setOpen] = useState(false)
   const [role, setRole] = useState('')
@@ -60,7 +85,7 @@ function TestimonialForm({ order, onSubmitted }) {
     setBusy(true)
     setError(null)
     try {
-      await api.orders.submitTestimonial(order.order_no, { role, text, rating: Number(rating) })
+      await api.orders.submitTestimonial(order.order_no, { role, text, rating })
       onSubmitted()
     } catch (err) {
       setError(err.message || 'Gagal mengirim testimoni.')
@@ -79,26 +104,31 @@ function TestimonialForm({ order, onSubmitted }) {
 
   return (
     <form onSubmit={submit} className="testimonial-form">
-      <input
-        value={role}
-        onChange={(e) => setRole(e.target.value)}
-        placeholder="Peran Anda (mis. Mahasiswa S1)"
-        required
-      />
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Ceritakan pengalaman Anda menggunakan layanan ini…"
-        rows={3}
-        required
-      />
-      <select value={rating} onChange={(e) => setRating(e.target.value)}>
-        {[5, 4, 3, 2, 1].map((n) => (
-          <option key={n} value={n}>
-            {n} bintang
-          </option>
-        ))}
-      </select>
+      <p className="testimonial-form__title">Bagaimana pengalaman Anda?</p>
+
+      <StarPicker value={rating} onChange={setRating} />
+
+      <label className="testimonial-form__field">
+        <span>Peran Anda</span>
+        <input
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          placeholder="mis. Mahasiswa S1"
+          required
+        />
+      </label>
+
+      <label className="testimonial-form__field">
+        <span>Testimoni</span>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Ceritakan pengalaman Anda menggunakan layanan ini…"
+          rows={3}
+          required
+        />
+      </label>
+
       {error && <p className="admin-form-error admin-form-error--inline">{error}</p>}
       <button type="submit" className="btn btn--primary btn--sm" disabled={busy}>
         {busy ? 'Mengirim…' : 'Kirim Testimoni'}

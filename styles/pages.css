@@ -1998,20 +1998,75 @@
 .testimonial-form {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  margin-top: 0.9rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--line);
+  gap: 0.9rem;
+  margin-top: 1rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--soft);
+  border-radius: var(--r-md);
 }
 
-.testimonial-form input,
-.testimonial-form textarea,
-.testimonial-form select {
+.testimonial-form__title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.testimonial-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.testimonial-form__field input,
+.testimonial-form__field textarea {
   width: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--ink);
+  background: #fff;
+  resize: vertical;
+  transition: border-color 0.15s;
+}
+
+.testimonial-form__field input:focus,
+.testimonial-form__field textarea:focus {
+  outline: none;
+  border-color: var(--blue-400);
 }
 
 .testimonial-form button {
   align-self: flex-start;
+}
+
+.star-picker {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.star-picker__star {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--blue-200);
+  transition: color 0.1s, transform 0.1s;
+}
+
+.star-picker__star:hover {
+  transform: scale(1.1);
+}
+
+.star-picker__star.is-on {
+  color: var(--gold);
+  fill: var(--gold);
 }
 
 @media (max-width: 900px) {
