@@ -14,9 +14,18 @@ const TEXT_FIELDS = [
   { name: 'bank_account_holder', label: 'Nama Pemilik Rekening' },
 ]
 
+const SOCIAL_FIELDS = [
+  { key: 'instagram', label: 'Instagram' },
+  { key: 'facebook', label: 'Facebook' },
+  { key: 'tiktok', label: 'TikTok' },
+  { key: 'youtube', label: 'YouTube' },
+  { key: 'whatsapp', label: 'WhatsApp (link wa.me)' },
+]
+
 export default function AdminSiteConfigPage() {
   const [form, setForm] = useState(null)
-  const [jsonFields, setJsonFields] = useState({ social_links: '{}', nav_items: '[]' })
+  const [socialLinks, setSocialLinks] = useState({})
+  const [navItems, setNavItems] = useState([])
   const [error, setError] = useState(null)
   const [saved, setSaved] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -25,12 +34,22 @@ export default function AdminSiteConfigPage() {
     api.siteConfig.show().then((data) => {
       const { social_links, nav_items, ...rest } = data
       setForm(rest)
-      setJsonFields({
-        social_links: JSON.stringify(social_links ?? {}, null, 2),
-        nav_items: JSON.stringify(nav_items ?? [], null, 2),
-      })
+      setSocialLinks(social_links ?? {})
+      setNavItems(nav_items?.length ? nav_items : [{ label: '', path: '' }])
     })
   }, [])
+
+  const updateNavItem = (index, key, value) => {
+    setNavItems(navItems.map((item, i) => (i === index ? { ...item, [key]: value } : item)))
+  }
+
+  const removeNavItem = (index) => {
+    setNavItems(navItems.filter((_, i) => i !== index))
+  }
+
+  const addNavItem = () => {
+    setNavItems([...navItems, { label: '', path: '' }])
+  }
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -42,12 +61,10 @@ export default function AdminSiteConfigPage() {
       for (const key of Object.keys(payload)) {
         if (payload[key] === '') payload[key] = null
       }
-      try {
-        payload.social_links = JSON.parse(jsonFields.social_links)
-        payload.nav_items = JSON.parse(jsonFields.nav_items)
-      } catch {
-        throw new Error('Format JSON di "Social Links" atau "Nav Items" tidak valid.')
-      }
+      payload.social_links = Object.fromEntries(
+        Object.entries(socialLinks).filter(([, url]) => url?.trim())
+      )
+      payload.nav_items = navItems.filter((n) => n.label?.trim() && n.path?.trim())
       await api.siteConfig.update(payload)
       setSaved(true)
     } catch (err) {
@@ -82,23 +99,45 @@ export default function AdminSiteConfigPage() {
         ))}
 
         <div className="field field--full">
-          <label htmlFor="social_links">Social Links (JSON)</label>
-          <textarea
-            id="social_links"
-            rows={4}
-            value={jsonFields.social_links}
-            onChange={(e) => setJsonFields({ ...jsonFields, social_links: e.target.value })}
-          />
+          <label>Media Sosial</label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.75rem' }}>
+            {SOCIAL_FIELDS.map((s) => (
+              <div className="field" key={s.key}>
+                <label htmlFor={`social_${s.key}`}>{s.label}</label>
+                <input
+                  id={`social_${s.key}`}
+                  type="url"
+                  placeholder="https://..."
+                  value={socialLinks[s.key] ?? ''}
+                  onChange={(e) => setSocialLinks({ ...socialLinks, [s.key]: e.target.value })}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="field field--full">
-          <label htmlFor="nav_items">Nav Items (JSON)</label>
-          <textarea
-            id="nav_items"
-            rows={6}
-            value={jsonFields.nav_items}
-            onChange={(e) => setJsonFields({ ...jsonFields, nav_items: e.target.value })}
-          />
+          <label>Menu Navigasi</label>
+          {navItems.map((item, i) => (
+            <div key={i} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <input
+                placeholder="Label (mis. Beranda)"
+                value={item.label}
+                onChange={(e) => updateNavItem(i, 'label', e.target.value)}
+              />
+              <input
+                placeholder="Path (mis. /kategori)"
+                value={item.path}
+                onChange={(e) => updateNavItem(i, 'path', e.target.value)}
+              />
+              <button type="button" className="btn btn--outline btn--sm" onClick={() => removeNavItem(i)}>
+                Hapus
+              </button>
+            </div>
+          ))}
+          <button type="button" className="btn btn--ghost btn--sm" onClick={addNavItem}>
+            + Tambah Menu
+          </button>
         </div>
 
         <button type="submit" className="btn btn--primary field--full" disabled={busy}>
