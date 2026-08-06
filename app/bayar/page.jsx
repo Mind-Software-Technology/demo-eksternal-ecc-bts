@@ -20,7 +20,6 @@ import {
 import { FaQrcode, FaUniversity, FaWallet, FaStore } from 'react-icons/fa'
 import Page from '../../components/layout/Page'
 import BrandMark from '../../components/layout/BrandMark'
-import CheckoutSteps from '../../components/layout/CheckoutSteps'
 import { useCart } from '../../context/cart'
 import { useAuth, loginUrl } from '../../context/auth'
 import { formatIDR } from '../../data/format'
@@ -507,8 +506,6 @@ function PaymentInner() {
               <FiGlobe /> Bahasa Indonesia
             </span>
           </header>
-
-          <CheckoutSteps active={2} />
 
           <div className="pay-amount">
             <span className="pay-amount__due">
