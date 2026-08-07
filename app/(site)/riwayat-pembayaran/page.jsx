@@ -343,6 +343,17 @@ export default function PaymentHistory() {
                     </div>
                   )}
 
+                  {o.status === 'pending' && (
+                    <div className="pay-record__quote-actions">
+                      <Link
+                        href={`/bayar?order_no=${encodeURIComponent(o.order_no)}`}
+                        className="btn btn--primary btn--sm"
+                      >
+                        Lanjutkan Pembayaran
+                      </Link>
+                    </div>
+                  )}
+
                   {o.can_review && (
                     <TestimonialForm order={o} onSubmitted={() => api.orders.list().then(({ items }) => setOrders(items))} />
                   )}

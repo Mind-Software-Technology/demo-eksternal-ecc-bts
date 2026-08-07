@@ -127,6 +127,8 @@ function PaymentInner() {
   const [error, setError] = useState(null)
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState(null)
+  const [switching, setSwitching] = useState(false)
+  const [switchError, setSwitchError] = useState(null)
   const [copiedField, setCopiedField] = useState(null)
   const pollRef = useRef(null)
 
@@ -319,6 +321,22 @@ function PaymentInner() {
     }
   }
 
+  // Cancels the pending transaction and drops back to the method-selection
+  // screen for this same order — for when the customer picked the wrong
+  // payment method by mistake.
+  const changeMethod = async () => {
+    setSwitching(true)
+    setSwitchError(null)
+    try {
+      await api.payments.changeMethod(order.order_no)
+      setPayment(null)
+    } catch (err) {
+      setSwitchError(err.message || 'Gagal mengganti metode pembayaran.')
+    } finally {
+      setSwitching(false)
+    }
+  }
+
   if (isPaid) {
     return (
       <Page title="Pembayaran Berhasil — ECC-BTS">
@@ -464,12 +482,22 @@ function PaymentInner() {
               </p>
             </div>
 
+            {switchError && <p className="auth-modal__error">{switchError}</p>}
+            <button
+              type="button"
+              className="btn btn--outline btn--block"
+              onClick={changeMethod}
+              disabled={switching || cancelling}
+            >
+              {switching ? 'Mengganti…' : 'Ganti Metode Pembayaran'}
+            </button>
+
             {cancelError && <p className="auth-modal__error">{cancelError}</p>}
             <button
               type="button"
               className="btn btn--outline btn--block"
               onClick={cancelOrder}
-              disabled={cancelling}
+              disabled={cancelling || switching}
             >
               {cancelling ? 'Membatalkan…' : 'Batalkan Pesanan'}
             </button>
