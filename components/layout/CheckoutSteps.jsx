@@ -2,10 +2,11 @@ import { FiCheck } from 'react-icons/fi'
 
 const STEPS = [
   { n: 1, label: 'Data Pemesan' },
-  { n: 2, label: 'Pembayaran' },
+  { n: 2, label: 'Konsultasi WhatsApp' },
+  { n: 3, label: 'Isi File' },
 ]
 
-/** 2-step progress indicator for the /bayar/data → /bayar checkout flow. */
+/** Progress indicator for the /bayar/data → /bayar/konsultasi → /bayar/upload checkout flow. */
 export default function CheckoutSteps({ active }) {
   return (
     <ol className="checkout-steps" aria-label="Langkah checkout">
