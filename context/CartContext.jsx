@@ -111,9 +111,7 @@ export function CartProvider({ children }) {
         image: it.service?.image_url,
         imageAlt: it.service?.image_alt,
         accent: it.service?.accent,
-        price: it.price,
         qty: it.qty,
-        lineTotal: it.line_total,
         requiresAttachment: it.service?.requires_attachment ?? false,
       })),
     [cart.items],
@@ -124,10 +122,11 @@ export function CartProvider({ children }) {
     [cart.items],
   )
 
+  // Harga tidak lagi diketahui di tahap keranjang — admin menetapkannya per
+  // pesanan setelah konsultasi WhatsApp, jadi tidak ada total untuk dipajang.
   const value = {
     detailed,
     count,
-    total: cart.total || 0,
     ready,
     addItem,
     removeItem,
