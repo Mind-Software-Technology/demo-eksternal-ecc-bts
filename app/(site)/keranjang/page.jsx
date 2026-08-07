@@ -9,10 +9,9 @@ import PageHero from '../../../components/sections/PageHero'
 import Reveal from '../../../components/ui/Reveal'
 import { useCart } from '../../../context/cart'
 import { useAuth, loginUrl } from '../../../context/auth'
-import { formatIDR } from '../../../data/format'
 
 export default function Cart() {
-  const { detailed, total, count, removeItem } = useCart()
+  const { detailed, count, removeItem } = useCart()
   const { user, ready: authReady } = useAuth()
   const router = useRouter()
 
@@ -59,17 +58,11 @@ export default function Cart() {
                         {it.title}
                       </Link>
                       <span className="cart-item__tag">{it.tagline}</span>
-                      <span className="cart-item__price">
-                        {formatIDR(it.price)}
-                      </span>
                     </div>
                     <div className="cart-item__controls">
                       <div className="qty-stepper qty-stepper--readonly" aria-label="Jumlah">
                         <span>{it.qty}</span>
                       </div>
-                      <span className="cart-item__line">
-                        {formatIDR(it.lineTotal)}
-                      </span>
                       <button
                         type="button"
                         className="cart-item__remove"
@@ -90,14 +83,14 @@ export default function Cart() {
                   <span>Jumlah item</span>
                   <b>{count}</b>
                 </div>
-                <div className="cart-summary__row">
-                  <span>Subtotal</span>
-                  <b>{formatIDR(total)}</b>
-                </div>
                 <div className="cart-summary__row cart-summary__row--total">
                   <span>Total</span>
-                  <b>{formatIDR(total)}</b>
+                  <b>Setelah konsultasi</b>
                 </div>
+                <p className="cart-summary__note">
+                  Harga tiap naskah berbeda, jadi ditentukan lewat konsultasi WhatsApp
+                  setelah Anda memesan. Anda baru membayar setelah menyetujui penawaran.
+                </p>
                 <button
                   type="button"
                   className="btn btn--primary btn--block btn--lg"

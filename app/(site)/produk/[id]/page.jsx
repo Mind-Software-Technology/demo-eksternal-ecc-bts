@@ -9,7 +9,6 @@ import PageHero from '../../../../components/sections/PageHero'
 import CTABand from '../../../../components/sections/CTABand'
 import Reveal from '../../../../components/ui/Reveal'
 import Rating from '../../../../components/ui/Rating'
-import { formatIDR } from '../../../../data/format'
 import { useCart } from '../../../../context/cart'
 import { useAuth, loginUrl } from '../../../../context/auth'
 import { api } from '../../../../lib/api'
@@ -90,10 +89,10 @@ export default function ProductDetail() {
               <Rating value={service.rating} reviews={service.reviews_count} />
             </div>
 
-            <div className="price-tag price-tag--lg">
-              {formatIDR(service.price)}
-              <small>/ layanan</small>
-            </div>
+            <p className="product-detail__quote-note">
+              Harga menyesuaikan kebutuhan tiap naskah. Tambahkan ke keranjang, lalu
+              konsultasikan dengan tim kami lewat WhatsApp untuk mendapat penawaran.
+            </p>
 
             <p>{service.description}</p>
 

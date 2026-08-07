@@ -134,7 +134,7 @@ function TestimonialForm({ order, onSubmitted }) {
         />
       </label>
 
-      {error && <p className="admin-form-error admin-form-error--inline">{error}</p>}
+      {error && <p className="testimonial-form__error">{error}</p>}
       <button type="submit" className="btn btn--primary btn--sm" disabled={busy}>
         {busy ? 'Mengirim…' : 'Kirim Testimoni'}
       </button>

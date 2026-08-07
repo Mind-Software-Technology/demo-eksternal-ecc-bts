@@ -28,23 +28,12 @@ export default function AuthForm({ mode }) {
 
   const explicitRedirect = searchParams.get('redirect')
   const redirectTo = explicitRedirect || '/'
-  // Admin selalu diarahkan ke /admin, kecuali ?redirect= memang sudah menunjuk
-  // ke halaman admin tertentu (mis. AdminGuard mengirim balik ke halaman admin
-  // yang tadinya mau diakses) — supaya login admin dari halaman publik manapun
-  // (keranjang, produk, dst.) tidak malah nyangkut di halaman publik itu.
-  const resolveRedirect = (u) => {
-    if (u.role === 'admin') {
-      return explicitRedirect?.startsWith('/admin') ? explicitRedirect : '/admin'
-    }
-    return explicitRedirect || '/'
-  }
   const update = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
   // Already logged in — this page is a dead end, bounce onward.
   useEffect(() => {
-    if (ready && user) router.replace(resolveRedirect(user))
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- resolveRedirect is derived from searchParams already in deps via explicitRedirect
-  }, [ready, user, explicitRedirect, router])
+    if (ready && user) router.replace(redirectTo)
+  }, [ready, user, redirectTo, router])
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -62,7 +51,7 @@ export default function AuthForm({ mode }) {
           password: form.password,
         })
       }
-      router.push(resolveRedirect(u))
+      router.push(redirectTo)
     } catch (err) {
       setError(err.message || 'Terjadi kesalahan. Coba lagi.')
     } finally {
@@ -185,7 +174,7 @@ export default function AuthForm({ mode }) {
           <span>atau</span>
         </div>
 
-      <GoogleSignInButton onError={setError} onSuccess={(u) => router.push(resolveRedirect(u))} />
+      <GoogleSignInButton onError={setError} onSuccess={() => router.push(redirectTo)} />
 
         <p className="auth-modal__switch">
           {mode === 'login' ? (
