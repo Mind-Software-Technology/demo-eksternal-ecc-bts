@@ -11,12 +11,13 @@ import { useCart } from '../../../context/cart'
 import { useAuth, loginUrl } from '../../../context/auth'
 import { api } from '../../../lib/api'
 import { setCachedOrder } from '../../../lib/checkoutOrderCache'
+import { takeSelectedCartItemIds } from '../../../lib/checkoutSelectionCache'
 
 /**
- * Checkout step 1 — collect orderer info and create the order. The order is
- * created here (before the WhatsApp consultation) so there's already an
- * order_no + item list for the admin to price during the chat; attachments
- * are uploaded later at /bayar/upload, after the customer returns from WA.
+ * Checkout step 1 — collect orderer info and create the order. From here the
+ * customer uploads files (/bayar/upload) and only then consults on WhatsApp
+ * (/bayar/konsultasi) — order created early so there's already an order_no +
+ * item list for the admin to reference once the consultation happens.
  *
  * Also doubles as the "Ubah data pemesan" edit screen reached later from the
  * payment page (?order_no=...) — only the name can be corrected there.
@@ -120,11 +121,13 @@ function OrdererDataInner() {
         setCachedOrder(updated)
         router.push(`/bayar?order_no=${encodeURIComponent(editOrderNo)}`)
       } else {
+        const cartItemIds = takeSelectedCartItemIds()
         const created = await api.orders.create({
           guest_name: guest.guest_name,
+          ...(cartItemIds && cartItemIds.length > 0 ? { cart_item_ids: cartItemIds } : {}),
         })
         setCachedOrder(created)
-        router.push(`/bayar/konsultasi?order_no=${encodeURIComponent(created.order_no)}`)
+        router.push(`/bayar/upload?order_no=${encodeURIComponent(created.order_no)}`)
       }
     } catch (err) {
       setError(err.message || 'Gagal menyimpan data pemesan. Coba lagi.')
@@ -162,8 +165,8 @@ function OrdererDataInner() {
 
           {!isEdit && (
             <p className="pay-section-hint">
-              Setelah ini Anda akan diarahkan untuk konsultasi singkat lewat WhatsApp sebelum
-              mengunggah file/dokumen pesanan Anda.
+              Setelah ini Anda akan diarahkan untuk mengunggah file/dokumen pesanan, lalu
+              konsultasi singkat lewat WhatsApp.
             </p>
           )}
 
@@ -172,7 +175,7 @@ function OrdererDataInner() {
               ? 'Menyimpan…'
               : isEdit
                 ? 'Simpan & Kembali ke Pembayaran'
-                : 'Lanjut Konsultasi WhatsApp'}{' '}
+                : 'Lanjut Unggah File'}{' '}
             {!busy && <FiArrowRight />}
           </button>
 

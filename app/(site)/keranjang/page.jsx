@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FiTrash2, FiShoppingCart, FiArrowRight } from 'react-icons/fi'
@@ -9,11 +9,17 @@ import PageHero from '../../../components/sections/PageHero'
 import Reveal from '../../../components/ui/Reveal'
 import { useCart } from '../../../context/cart'
 import { useAuth, loginUrl } from '../../../context/auth'
+import { setSelectedCartItemIds } from '../../../lib/checkoutSelectionCache'
 
 export default function Cart() {
-  const { detailed, count, removeItem } = useCart()
+  const { detailed, removeItem } = useCart()
   const { user, ready: authReady } = useAuth()
   const router = useRouter()
+
+  // Tracked as "unchecked" rather than "checked" so a newly added cart item
+  // (never seen before) defaults to selected without needing an effect to
+  // seed it — it's just absent from this set.
+  const [deselected, setDeselected] = useState(() => new Set())
 
   // Cart is account-only — bounce a logged-out visitor to login.
   useEffect(() => {
@@ -22,8 +28,27 @@ export default function Cart() {
 
   if (!authReady || !user) return null
 
+  const toggleItem = (cartItemId) => {
+    setDeselected((prev) => {
+      const next = new Set(prev)
+      if (next.has(cartItemId)) next.delete(cartItemId)
+      else next.add(cartItemId)
+      return next
+    })
+  }
+
+  const selectedItems = detailed.filter((it) => !deselected.has(it.cartItemId))
+  const allSelected = selectedItems.length === detailed.length && detailed.length > 0
+
+  const toggleSelectAll = () => {
+    setDeselected(allSelected ? new Set(detailed.map((it) => it.cartItemId)) : new Set())
+  }
+
   // Proceed to step 1 of checkout — orderer info + attachments — before payment.
-  const checkout = () => router.push('/bayar/data')
+  const checkout = () => {
+    setSelectedCartItemIds(selectedItems.map((it) => it.cartItemId))
+    router.push('/bayar/data')
+  }
 
   return (
     <Page title="Keranjang — ECC-BTS">
@@ -48,40 +73,65 @@ export default function Cart() {
             <div className="cart-grid">
               {/* Items */}
               <Reveal className="cart-items">
-                {detailed.map((it) => (
-                  <div className="cart-item" key={it.cartItemId} data-accent={it.accent}>
-                    <Link href={`/produk/${it.slug}`} className="cart-item__thumb">
-                      <img src={it.image} alt={it.imageAlt || it.title} />
-                    </Link>
-                    <div className="cart-item__info">
-                      <Link href={`/produk/${it.slug}`} className="cart-item__title">
-                        {it.title}
+                <div className="cart-select-all">
+                  <label className="cart-checkbox">
+                    <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+                    <span>Pilih Semua</span>
+                  </label>
+                  <span className="cart-select-all__count">
+                    {selectedItems.length} dari {detailed.length} dipilih
+                  </span>
+                </div>
+
+                {detailed.map((it) => {
+                  const checked = !deselected.has(it.cartItemId)
+                  return (
+                    <div
+                      className={`cart-item ${checked ? '' : 'cart-item--unselected'}`}
+                      key={it.cartItemId}
+                      data-accent={it.accent}
+                    >
+                      <label className="cart-checkbox cart-item__checkbox">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleItem(it.cartItemId)}
+                          aria-label={`Pilih ${it.title}`}
+                        />
+                      </label>
+                      <Link href={`/produk/${it.slug}`} className="cart-item__thumb">
+                        <img src={it.image} alt={it.imageAlt || it.title} />
                       </Link>
-                      <span className="cart-item__tag">{it.tagline}</span>
-                    </div>
-                    <div className="cart-item__controls">
-                      <div className="qty-stepper qty-stepper--readonly" aria-label="Jumlah">
-                        <span>{it.qty}</span>
+                      <div className="cart-item__info">
+                        <Link href={`/produk/${it.slug}`} className="cart-item__title">
+                          {it.title}
+                        </Link>
+                        <span className="cart-item__tag">{it.tagline}</span>
                       </div>
-                      <button
-                        type="button"
-                        className="cart-item__remove"
-                        aria-label={`Hapus ${it.title}`}
-                        onClick={() => removeItem(it.cartItemId)}
-                      >
-                        <FiTrash2 />
-                      </button>
+                      <div className="cart-item__controls">
+                        <div className="qty-stepper qty-stepper--readonly" aria-label="Jumlah">
+                          <span>{it.qty}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="cart-item__remove"
+                          aria-label={`Hapus ${it.title}`}
+                          onClick={() => removeItem(it.cartItemId)}
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </Reveal>
 
               {/* Summary */}
               <Reveal className="cart-summary" delay={0.1}>
                 <h3>Ringkasan Pesanan</h3>
                 <div className="cart-summary__row">
-                  <span>Jumlah item</span>
-                  <b>{count}</b>
+                  <span>Layanan dipilih</span>
+                  <b>{selectedItems.length} dari {detailed.length}</b>
                 </div>
                 <div className="cart-summary__row cart-summary__row--total">
                   <span>Total</span>
@@ -95,6 +145,7 @@ export default function Cart() {
                   type="button"
                   className="btn btn--primary btn--block btn--lg"
                   onClick={checkout}
+                  disabled={selectedItems.length === 0}
                 >
                   Pesan Sekarang
                 </button>

@@ -4,13 +4,15 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
-import { FiMenu, FiX, FiShoppingCart, FiLogOut } from 'react-icons/fi'
+import { FiMenu, FiX, FiShoppingCart, FiLogOut, FiBell } from 'react-icons/fi'
 import { getNavItems } from '../../data/site'
 import { useCart } from '../../context/cart'
 import { useAuth } from '../../context/auth'
+import { useNotifications } from '../../context/notifications'
 import { useSiteConfig } from '../../hooks/useSiteConfig'
 import BrandMark from './BrandMark'
 import UserMenu from './UserMenu'
+import NotificationBell from './NotificationBell'
 
 /** Mirrors react-router's <NavLink> active-class behavior for next/link. */
 function isPathActive(pathname, href, end) {
@@ -24,6 +26,7 @@ export default function Navbar() {
   const [verifySent, setVerifySent] = useState(false)
   const { count } = useCart()
   const { user, ready, logout, resendVerification } = useAuth()
+  const { unreadCount, markAllRead } = useNotifications()
   const config = useSiteConfig()
   const pathname = usePathname()
 
@@ -103,6 +106,7 @@ export default function Navbar() {
               </>
             )}
           </div>
+          {ready && user && <NotificationBell />}
           <Link
             href="/keranjang"
             className={`navbar__cart ${cartActive ? 'active' : ''}`}
@@ -194,9 +198,22 @@ export default function Navbar() {
                     <Link
                       href="/riwayat-pembayaran"
                       className="drawer__link"
-                      onClick={() => setOpen(false)}
+                      onClick={() => {
+                        setOpen(false)
+                        markAllRead()
+                      }}
                     >
                       Riwayat Pembayaran
+                    </Link>
+                    <Link
+                      href="/riwayat-pembayaran"
+                      className="drawer__link"
+                      onClick={() => {
+                        setOpen(false)
+                        markAllRead()
+                      }}
+                    >
+                      <FiBell /> Notifikasi{unreadCount > 0 ? ` (${unreadCount})` : ''}
                     </Link>
                     <button
                       type="button"
