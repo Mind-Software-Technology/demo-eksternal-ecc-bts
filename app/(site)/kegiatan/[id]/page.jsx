@@ -18,6 +18,7 @@ export default function EventDetail() {
   const router = useRouter()
   const [event, setEvent] = useState(null)
   const [notFound, setNotFound] = useState(false)
+  const [error, setError] = useState(null)
   // Dibekukan sekali saat mount — sama seperti di halaman daftar. Memanggil
   // Date.now() langsung saat render bikin render jadi tidak murni.
   const [now] = useState(() => Date.now())
@@ -27,13 +28,21 @@ export default function EventDetail() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resets state before refetching on id change
     setEvent(null)
     setNotFound(false)
+    setError(null)
     api.events
       .show(id)
       .then((data) => {
         if (!cancelled) setEvent(data)
       })
-      .catch(() => {
-        if (!cancelled) setNotFound(true)
+      .catch((e) => {
+        if (cancelled) return
+        // Hanya 404 yang berarti "kegiatannya memang tidak ada" — itu yang
+        // pantas dipantulkan balik ke daftar. Error lain (API belum ter-deploy,
+        // server mati, jaringan putus) harus terlihat: memantulkan diam-diam
+        // membuat gangguan server tidak bisa dibedakan dari kegiatan terhapus,
+        // dan halaman seolah menolak dibuka tanpa alasan.
+        if (e.status === 404) setNotFound(true)
+        else setError(e.message || 'Gagal memuat kegiatan.')
       })
     return () => {
       cancelled = true
@@ -44,6 +53,26 @@ export default function EventDetail() {
   useEffect(() => {
     if (notFound) router.replace('/kegiatan')
   }, [notFound, router])
+
+  if (error) {
+    return (
+      <Page title="Gagal Memuat Kegiatan — ECC">
+        <PageHero
+          title="Gagal Memuat Kegiatan"
+          crumb="Kegiatan"
+          subtitle="Detail kegiatan ini sedang tidak bisa diambil."
+        />
+        <section className="section">
+          <div className="container" style={{ textAlign: 'center' }}>
+            <p className="empty-note">{error}</p>
+            <Link href="/kegiatan" className="btn btn--primary btn--lg">
+              <FiArrowLeft /> Kembali ke daftar kegiatan
+            </Link>
+          </div>
+        </section>
+      </Page>
+    )
+  }
 
   if (!event) return null
 
