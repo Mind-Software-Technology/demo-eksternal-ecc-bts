@@ -129,6 +129,8 @@ function PaymentInner() {
   const [cancelError, setCancelError] = useState(null)
   const [switching, setSwitching] = useState(false)
   const [switchError, setSwitchError] = useState(null)
+  const [accepting, setAccepting] = useState(false)
+  const [acceptError, setAcceptError] = useState(null)
   const [copiedField, setCopiedField] = useState(null)
   const pollRef = useRef(null)
 
@@ -204,6 +206,20 @@ function PaymentInner() {
     return () => clearInterval(pollRef.current)
   }, [payment, order])
 
+  // Poll the order itself while waiting on admin — picks up the moment a
+  // price is set (awaiting_quote → quoted) without the customer needing to
+  // reload the page.
+  useEffect(() => {
+    if (!order || order.status !== 'awaiting_quote') return
+    const interval = setInterval(() => {
+      api.orders
+        .show(order.order_no)
+        .then(setOrder)
+        .catch(() => {})
+    }, 8000)
+    return () => clearInterval(interval)
+  }, [order])
+
   if (!authReady || !user || !orderNo || orderLoading) return null
 
   if (orderError) {
@@ -262,9 +278,9 @@ function PaymentInner() {
   }
 
   const status = payment?.transaction_status
-  const isPaid = status && TERMINAL_OK.includes(status)
-  const isFailed = status && TERMINAL_FAIL.includes(status)
-  const isCancelled = status === 'cancel'
+  const isPaid = order.status === 'paid' || (status && TERMINAL_OK.includes(status))
+  const isFailed = ['cancelled', 'expired', 'failed'].includes(order.status) || (status && TERMINAL_FAIL.includes(status))
+  const isCancelled = order.status === 'cancelled' || status === 'cancel'
 
   const copyToClipboard = async (text, field) => {
     try {
@@ -335,6 +351,99 @@ function PaymentInner() {
     } finally {
       setSwitching(false)
     }
+  }
+
+  const acceptQuote = async () => {
+    setAccepting(true)
+    setAcceptError(null)
+    try {
+      // Moves order.status to 'pending' — the component re-renders straight
+      // into the payment method form below, no extra navigation needed.
+      setOrder(await api.orders.acceptQuote(order.order_no))
+    } catch (err) {
+      setAcceptError(err.message || 'Gagal menyetujui penawaran.')
+    } finally {
+      setAccepting(false)
+    }
+  }
+
+  // Admin hasn't priced this order yet — nothing to pay, so there's no
+  // method-selection form to show. Reached right after the WhatsApp
+  // consultation, before the admin has had a chance to input the price.
+  if (order.status === 'awaiting_quote' && !payment) {
+    return (
+      <Page title="Menunggu Penawaran Harga — ECC-BTS">
+        <div className="pay-done">
+          <FiClock className="pay-done__ic" />
+          <h1>Menunggu Penawaran Harga</h1>
+          <p className="pay-record__note pay-record__note--processing" style={{ justifyContent: 'center' }}>
+            Sedang diproses admin
+          </p>
+          <p>
+            Admin kami sedang menyiapkan penawaran harga untuk invoice{' '}
+            <b>#{order.order_no}</b> berdasarkan hasil konsultasi Anda. Halaman ini akan
+            otomatis memperbarui diri dan menampilkan pilihan pembayaran begitu harga tersedia.
+          </p>
+          <div className="pay-done__actions">
+            <Link href="/riwayat-pembayaran" className="btn btn--blue btn--lg">
+              Lihat Riwayat Pembayaran
+            </Link>
+          </div>
+        </div>
+      </Page>
+    )
+  }
+
+  // Priced, but not yet accepted — review the quote here before it unlocks
+  // the payment method form.
+  if (order.status === 'quoted' && !payment) {
+    return (
+      <Page title={`Penawaran Harga ${formatIDR(total)} — ECC-BTS`}>
+        <div className="pay-page pay-page--single">
+          <div className="pay-main">
+            <header className="pay-head">
+              <BrandMark />
+              <span className="pay-locale">
+                <FiGlobe /> Bahasa Indonesia
+              </span>
+            </header>
+
+            <div className="pay-amount">
+              <span className="pay-amount__due">
+                <FiFileText /> Penawaran harga — invoice #{order.order_no}
+              </span>
+              <strong className="pay-amount__value">{formatIDR(total)}</strong>
+            </div>
+
+            <ul className="pay-summary__items">
+              {items.map((it) => (
+                <li key={it.id}>
+                  <span>
+                    {it.title_snapshot}
+                    {it.qty > 1 && <em> × {it.qty}</em>}
+                  </span>
+                  <b>{formatIDR(it.line_total)}</b>
+                </li>
+              ))}
+            </ul>
+
+            {acceptError && <p className="auth-modal__error">{acceptError}</p>}
+            <button
+              type="button"
+              className="btn btn--primary btn--block btn--lg pay-confirm"
+              onClick={acceptQuote}
+              disabled={accepting}
+            >
+              {accepting ? 'Memproses…' : 'Setuju & Lanjut Bayar'}
+            </button>
+
+            <Link href="/riwayat-pembayaran" className="pay-back">
+              <FiArrowLeft /> Lihat riwayat pembayaran
+            </Link>
+          </div>
+        </div>
+      </Page>
+    )
   }
 
   if (isPaid) {
@@ -661,10 +770,6 @@ function PaymentInner() {
           <button type="submit" className="btn btn--primary btn--block btn--lg pay-confirm" disabled={busy}>
             {busy ? 'Memproses…' : 'Bayar Sekarang'}
           </button>
-
-          <Link href={`/bayar/data?order_no=${encodeURIComponent(order.order_no)}`} className="pay-back">
-            <FiArrowLeft /> Ubah data pemesan
-          </Link>
 
           <div className="pay-foot">
             <FiLock /> Pembayaran Aman · Midtrans Sandbox

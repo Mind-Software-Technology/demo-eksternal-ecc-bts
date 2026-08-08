@@ -171,6 +171,21 @@ export default function PaymentHistory() {
       .finally(() => setLoading(false))
   }, [user])
 
+  // Auto-refresh while any order is still awaiting admin action (quoting or
+  // payment settling) — so the customer sees the update the moment admin
+  // sets a price, without needing to manually reload the page.
+  useEffect(() => {
+    const isWaiting = orders?.some((o) => ['awaiting_quote', 'quoted', 'awaiting_payment'].includes(o.status))
+    if (!user || !isWaiting) return
+    const interval = setInterval(() => {
+      api.orders
+        .list()
+        .then(({ items }) => setOrders(items))
+        .catch(() => {})
+    }, 8000)
+    return () => clearInterval(interval)
+  }, [user, orders])
+
   const cancelOrder = async (orderNo) => {
     setCancellingNo(orderNo)
     setCancelError(null)
@@ -308,8 +323,9 @@ export default function PaymentHistory() {
 
                   {o.status === 'awaiting_quote' && (
                     <div className="pay-record__quote-actions">
-                      <p className="pay-record__note">
-                        Menunggu penawaran harga dari admin. Kami akan memberi tahu Anda setelah harga ditentukan.
+                      <p className="pay-record__note pay-record__note--processing">
+                        Sedang diproses admin — harga pesanan Anda sedang disiapkan. Halaman ini
+                        akan otomatis diperbarui begitu harga tersedia.
                       </p>
                       <button
                         type="button"
@@ -331,14 +347,6 @@ export default function PaymentHistory() {
                         disabled={acceptingNo === o.order_no}
                       >
                         {acceptingNo === o.order_no ? 'Memproses…' : 'Setuju & Bayar'}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn--outline btn--sm"
-                        onClick={() => declineQuote(o.order_no)}
-                        disabled={decliningNo === o.order_no}
-                      >
-                        {decliningNo === o.order_no ? 'Memproses…' : 'Tolak Penawaran'}
                       </button>
                     </div>
                   )}

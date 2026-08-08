@@ -1,7 +1,9 @@
 import '../styles/index.css'
 import { CartProvider } from '../context/CartContext'
 import { AuthProvider } from '../context/AuthContext'
+import { NotificationProvider } from '../context/NotificationContext'
 import CartToast from '../components/ui/CartToast'
+import NotificationToast from '../components/ui/NotificationToast'
 
 export const metadata = {
   title: 'ECC — Best To Solution',
@@ -31,10 +33,13 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <AuthProvider>
-          <CartProvider>
-            {children}
-            <CartToast />
-          </CartProvider>
+          <NotificationProvider>
+            <CartProvider>
+              {children}
+              <CartToast />
+              <NotificationToast />
+            </CartProvider>
+          </NotificationProvider>
         </AuthProvider>
       </body>
     </html>

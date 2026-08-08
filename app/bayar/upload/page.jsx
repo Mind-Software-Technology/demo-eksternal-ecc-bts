@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { FiGlobe, FiArrowLeft, FiArrowRight, FiXCircle, FiFileText, FiCheckCircle } from 'react-icons/fi'
+import { FiGlobe, FiArrowLeft, FiArrowRight, FiXCircle, FiFileText, FiCheckCircle, FiUpload, FiX } from 'react-icons/fi'
 import Page from '../../../components/layout/Page'
 import BrandMark from '../../../components/layout/BrandMark'
 import CheckoutSteps from '../../../components/layout/CheckoutSteps'
@@ -17,11 +17,18 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+const MAX_FILE_BYTES = 50 * 1024 * 1024
+
+function isPreviewableType(type) {
+  return type.startsWith('image/') || type === 'application/pdf'
+}
+
 /**
- * Checkout step 3 — upload the attachment for each order item, now that the
- * WhatsApp consultation is done. Each file uploads immediately on selection
- * (one request per item, via POST /orders/{order_no}/items/{item}/attachment)
- * rather than a single bundled submit, since items are already saved.
+ * Checkout step 2 — upload the attachment for each order item, right after
+ * the order is created. Each file uploads immediately on selection (one
+ * request per item, via POST /orders/{order_no}/items/{item}/attachment)
+ * rather than a single bundled submit, since items are already saved. The
+ * WhatsApp consultation happens after this, at /bayar/konsultasi.
  */
 function UploadInner() {
   const searchParams = useSearchParams()
@@ -32,6 +39,9 @@ function UploadInner() {
   const [order, setOrder] = useState(() => takeCachedOrder(orderNo))
   const [loading, setLoading] = useState(!order)
   const [loadError, setLoadError] = useState(null)
+  // Files picked but not sent yet — the customer previews them here first
+  // and confirms with "Kirim File" before anything actually uploads.
+  const [pending, setPending] = useState({})
   const [previewUrls, setPreviewUrls] = useState({})
   const [uploadingId, setUploadingId] = useState(null)
   const [itemErrors, setItemErrors] = useState({})
@@ -62,6 +72,14 @@ function UploadInner() {
     if (!orderNo) router.replace('/keranjang')
   }, [orderNo, router])
 
+  // Revoke preview object URLs on unmount so they don't leak memory.
+  useEffect(() => {
+    return () => {
+      Object.values(previewUrls).forEach((url) => URL.revokeObjectURL(url))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup-only effect, intentionally reads the latest ref via closure at unmount
+  }, [])
+
   if (!authReady || !user || !orderNo) return null
   if (loading) return null
 
@@ -82,16 +100,49 @@ function UploadInner() {
     )
   }
 
-  const handleFile = async (item, file) => {
-    if (!file) return
+  const revokePreview = (itemId) => {
+    setPreviewUrls((p) => {
+      if (p[itemId]) URL.revokeObjectURL(p[itemId])
+      const { [itemId]: _removed, ...rest } = p
+      return rest
+    })
+  }
 
-    if (file.type.startsWith('image/')) {
+  // Step 1: pick a file — just previews it, nothing is sent to the server yet.
+  const handleSelect = (item, file) => {
+    if (!file) return
+    setItemErrors((e) => ({ ...e, [item.id]: null }))
+
+    if (file.size > MAX_FILE_BYTES) {
+      setItemErrors((e) => ({ ...e, [item.id]: 'Ukuran file maksimal 50MB.' }))
+      return
+    }
+
+    revokePreview(item.id)
+    if (isPreviewableType(file.type)) {
       setPreviewUrls((p) => ({ ...p, [item.id]: URL.createObjectURL(file) }))
     }
-    setItemErrors((e) => ({ ...e, [item.id]: null }))
+    setPending((p) => ({ ...p, [item.id]: file }))
+  }
+
+  const cancelPending = (item) => {
+    revokePreview(item.id)
+    setPending((p) => {
+      const { [item.id]: _removed, ...rest } = p
+      return rest
+    })
+  }
+
+  // Step 2: customer reviewed the preview and confirms — only now does the
+  // file actually upload.
+  const sendFile = async (item) => {
+    const file = pending[item.id]
+    if (!file) return
+
     setUploadingId(item.id)
     try {
       await api.orders.uploadAttachment(order.order_no, item.id, file)
+      cancelPending(item)
       reload()
     } catch (err) {
       setItemErrors((e) => ({ ...e, [item.id]: err.message || 'Gagal mengunggah file. Coba lagi.' }))
@@ -114,57 +165,100 @@ function UploadInner() {
             </span>
           </header>
 
-          <CheckoutSteps active={3} />
+          <CheckoutSteps active={2} />
 
           <h2 className="pay-section-label">Unggah File / Dokumen</h2>
           <p className="pay-section-hint">
             Unggah naskah/dokumen/data untuk setiap layanan yang dipesan. Format: PDF, DOC(X), JPG,
-            PNG — maks. 10MB.
+            PNG — maks. 50MB. Anda bisa melihat pratinjau file sebelum benar-benar mengirimkannya.
           </p>
 
-          {order.items.map((it) => (
-            <div className="field" key={it.id}>
-              <label htmlFor={`file-${it.id}`}>
-                {it.title_snapshot}
-                {!it.requires_attachment && ' (opsional)'}
-                {it.has_attachment && (
-                  <span style={{ color: 'var(--color-success, #16a34a)', marginLeft: 8 }}>
-                    <FiCheckCircle /> Sudah diunggah
-                  </span>
-                )}
-              </label>
-              <input
-                key={uploadingId === it.id ? 'uploading' : it.has_attachment ? 'uploaded' : 'empty'}
-                id={`file-${it.id}`}
-                type="file"
-                disabled={uploadingId === it.id}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                onChange={(e) => handleFile(it, e.target.files?.[0] || null)}
-              />
-              {uploadingId === it.id && <p className="pay-section-hint">Mengunggah…</p>}
-              {itemErrors[it.id] && <p className="auth-modal__error">{itemErrors[it.id]}</p>}
-              {it.has_attachment && it.attachment_original_name && (
-                <div className="file-preview">
-                  {previewUrls[it.id] ? (
-                    <img src={previewUrls[it.id]} alt="" className="file-preview__thumb" />
-                  ) : (
-                    <FiFileText className="file-preview__ic" />
+          {order.items.map((it) => {
+            const file = pending[it.id]
+            const isUploading = uploadingId === it.id
+
+            return (
+              <div className="field" key={it.id}>
+                <label htmlFor={`file-${it.id}`}>
+                  {it.title_snapshot}
+                  {!it.requires_attachment && ' (opsional)'}
+                  {it.has_attachment && !file && (
+                    <span style={{ color: 'var(--color-success, #16a34a)', marginLeft: 8 }}>
+                      <FiCheckCircle /> Sudah diunggah
+                    </span>
                   )}
-                  <div className="file-preview__meta">
-                    <span className="file-preview__name">{it.attachment_original_name}</span>
+                </label>
+
+                {!file && (
+                  <input
+                    key={it.has_attachment ? 'uploaded' : 'empty'}
+                    id={`file-${it.id}`}
+                    type="file"
+                    disabled={isUploading}
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    onChange={(e) => handleSelect(it, e.target.files?.[0] || null)}
+                  />
+                )}
+
+                {itemErrors[it.id] && <p className="auth-modal__error">{itemErrors[it.id]}</p>}
+
+                {/* Picked but not sent yet — preview + confirm/cancel. */}
+                {file && (
+                  <div className="file-preview file-preview--pending">
+                    {previewUrls[it.id] ? (
+                      file.type === 'application/pdf' ? (
+                        <iframe src={previewUrls[it.id]} title={file.name} className="file-preview__pdf" />
+                      ) : (
+                        <img src={previewUrls[it.id]} alt="" className="file-preview__thumb" />
+                      )
+                    ) : (
+                      <FiFileText className="file-preview__ic" />
+                    )}
+                    <div className="file-preview__meta">
+                      <span className="file-preview__name">{file.name}</span>
+                      <span className="file-preview__size">{formatFileSize(file.size)}</span>
+                    </div>
+                    <div className="file-preview__actions">
+                      <button
+                        type="button"
+                        className="btn btn--primary btn--sm"
+                        onClick={() => sendFile(it)}
+                        disabled={isUploading}
+                      >
+                        <FiUpload /> {isUploading ? 'Mengirim…' : 'Kirim File'}
+                      </button>
+                      <button
+                        type="button"
+                        className="file-preview__clear"
+                        onClick={() => cancelPending(it)}
+                        disabled={isUploading}
+                      >
+                        <FiX /> Batal
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+
+                {/* Already uploaded, nothing pending to preview. */}
+                {!file && it.has_attachment && it.attachment_original_name && (
+                  <div className="file-preview">
+                    <FiFileText className="file-preview__ic" />
+                    <div className="file-preview__meta">
+                      <span className="file-preview__name">{it.attachment_original_name}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
 
           <button
             type="button"
             className="btn btn--primary btn--block btn--lg pay-confirm"
             disabled={!canFinish}
-            onClick={() => router.push('/riwayat-pembayaran')}
+            onClick={() => router.push(`/bayar/konsultasi?order_no=${encodeURIComponent(order.order_no)}`)}
           >
-            Selesai <FiArrowRight />
+            Lanjut Konsultasi WhatsApp <FiArrowRight />
           </button>
           {!canFinish && (
             <p className="pay-section-hint">
@@ -172,8 +266,8 @@ function UploadInner() {
             </p>
           )}
 
-          <Link href={`/bayar/konsultasi?order_no=${encodeURIComponent(order.order_no)}`} className="pay-back">
-            <FiArrowLeft /> Kembali ke halaman konsultasi
+          <Link href={`/bayar/data?order_no=${encodeURIComponent(order.order_no)}`} className="pay-back">
+            <FiArrowLeft /> Ubah data pemesan
           </Link>
         </div>
       </div>
