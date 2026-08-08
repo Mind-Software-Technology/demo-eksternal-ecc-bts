@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { FiCalendar, FiMapPin, FiClock } from 'react-icons/fi'
 import { FaWhatsapp } from 'react-icons/fa6'
 import Page from '../../../components/layout/Page'
@@ -59,7 +60,14 @@ export default function Kegiatan() {
           {e.category && <span className="event-card__cat">{e.category.title}</span>}
         </div>
         <div className="event-card__body">
-          <h3>{e.title}</h3>
+          {/* Stretched link: judulnya saja yang jadi <a>, tapi ::after-nya
+              menutupi seluruh kartu — jadi kartu bisa diklik tanpa membuat
+              <a> bersarang di dalam tombol WhatsApp di bawah. */}
+          <h3>
+            <Link href={`/kegiatan/${e.id}`} className="event-card__link">
+              {e.title}
+            </Link>
+          </h3>
           <div className="event-card__meta">
             {e.starts_at && (
               <span>
