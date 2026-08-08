@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { api } from '../lib/api'
 import { formatIDR } from '../data/format'
 import { NotificationContext } from './notifications'
@@ -15,13 +16,28 @@ import { useAuth } from './auth'
 // This is also the single source of truth for the order list itself
 // (/riwayat-pembayaran reads `orders` from here instead of running its own
 // poll — same endpoint, no reason to fetch it twice).
+//
+// Setiap update memicu tiga hal: lonceng di navbar, toast dalam halaman, dan
+// (kalau diizinkan) popup Chrome/OS lewat Notification API.
+//
+// ponytail: popup hanya hidup selama situs terbuka di suatu tab — Notification
+// API memang begitu. Kalau nanti perlu notifikasi saat situs benar-benar
+// ditutup, itu Web Push: service worker + kunci VAPID + tabel langganan push
+// + endpoint pengirim di Laravel. Jauh lebih besar, dan butuh backend.
 // ───────────────────────────────────────────────────────────────────────────
 
 const POLL_MS = 2000
+// Tab di background tidak perlu 2 detik, tapi juga tidak boleh mati total —
+// notifikasi desktop justru paling berguna saat pelanggan sedang di tab lain.
+// Tiap tick ke-15 ≈ 30 detik, jadi ~120 request/jam alih-alih 1800.
+const BACKGROUND_EVERY = 15
 const MAX_STORED = 20
 const STATUS_KEY = 'ecc-bts-order-status-seen'
 const RESULT_KEY = 'ecc-bts-order-item-result-seen'
 const LIST_KEY = 'ecc-bts-notifications'
+
+const supportsDesktopNotifications = () =>
+  typeof window !== 'undefined' && 'Notification' in window
 
 function readJSON(key, fallback) {
   try {
@@ -42,6 +58,7 @@ function writeJSON(key, value) {
 
 export function NotificationProvider({ children }) {
   const { user, ready: authReady } = useAuth()
+  const router = useRouter()
   const [notifications, setNotifications] = useState([])
   const [toast, setToast] = useState(null)
   // null = belum pernah berhasil dimuat (dipakai /riwayat-pembayaran untuk
@@ -126,7 +143,26 @@ export function NotificationProvider({ children }) {
     })
 
     setToast(entries.length === 1 ? entries[0].message : `Anda punya ${entries.length} notifikasi baru.`)
-  }, [])
+
+    // Popup Chrome/OS di luar halaman — inilah yang sampai ke pelanggan saat
+    // tab ECC-BTS tidak sedang dilihat.
+    if (supportsDesktopNotifications() && Notification.permission === 'granted') {
+      entries.forEach((entry) => {
+        // `tag` per pesanan: update berikutnya untuk pesanan yang sama
+        // menggantikan popup lama, bukan menumpuk.
+        const popup = new Notification('ECC-BTS', {
+          body: entry.message,
+          icon: '/images/logo.png',
+          tag: entry.orderNo,
+        })
+        popup.onclick = () => {
+          window.focus()
+          popup.close()
+          router.push('/riwayat-pembayaran')
+        }
+      })
+    }
+  }, [router])
 
   useEffect(() => {
     if (!authReady) return undefined
@@ -136,14 +172,25 @@ export function NotificationProvider({ children }) {
       return undefined
     }
     refreshOrders()
-    // Skip ticks while the tab is in the background — at 2s a tab left open
-    // overnight would otherwise fire ~43k requests. It catches up on the
-    // first tick after the user comes back.
+    let tick = 0
     const interval = setInterval(() => {
-      if (!document.hidden) refreshOrders()
+      tick += 1
+      if (!document.hidden || tick % BACKGROUND_EVERY === 0) refreshOrders()
     }, POLL_MS)
     return () => clearInterval(interval)
   }, [authReady, user, refreshOrders])
+
+  // Izin notifikasi diminta hanya setelah pelanggan login — merekalah yang
+  // punya pesanan untuk dinotifikasi. Meminta ke pengunjung anonim membakar
+  // kesempatan yang cuma sekali: begitu ditolak, browser tidak akan pernah
+  // menampilkan prompt itu lagi (harus lewat setelan situs).
+  useEffect(() => {
+    if (!user || !supportsDesktopNotifications()) return
+    if (Notification.permission !== 'default') return
+    Notification.requestPermission().catch(() => {
+      /* browser menolak prompt (mis. mode senyap Chrome) — lonceng tetap jalan */
+    })
+  }, [user])
 
   // Auto-dismiss the toast.
   useEffect(() => {
