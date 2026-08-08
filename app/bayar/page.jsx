@@ -104,6 +104,11 @@ const METHODS = [
 const TERMINAL_OK = ['settlement', 'capture']
 const TERMINAL_FAIL = ['expire', 'cancel', 'deny', 'failure']
 
+// Sama dengan POLL_MS di NotificationContext — halaman ini menunggu aksi
+// admin (penetapan harga) dan webhook Midtrans (status bayar), dua hal yang
+// pelanggan tunggui sambil menatap layar.
+const POLL_MS = 2000
+
 function PaymentInner() {
   const searchParams = useSearchParams()
   const orderNo = searchParams.get('order_no')
@@ -198,11 +203,12 @@ function PaymentInner() {
       return
     }
     pollRef.current = setInterval(() => {
+      if (document.hidden) return
       api.payments
         .status(order.order_no)
         .then(setPayment)
         .catch(() => {})
-    }, 4000)
+    }, POLL_MS)
     return () => clearInterval(pollRef.current)
   }, [payment, order])
 
@@ -212,11 +218,12 @@ function PaymentInner() {
   useEffect(() => {
     if (!order || order.status !== 'awaiting_quote') return
     const interval = setInterval(() => {
+      if (document.hidden) return
       api.orders
         .show(order.order_no)
         .then(setOrder)
         .catch(() => {})
-    }, 8000)
+    }, POLL_MS)
     return () => clearInterval(interval)
   }, [order])
 

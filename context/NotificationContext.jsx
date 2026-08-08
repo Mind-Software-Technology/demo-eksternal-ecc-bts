@@ -10,11 +10,14 @@ import { useAuth } from './auth'
 // Site-wide notifications: polls the customer's orders in the background so
 // they find out about admin activity — pricing an order (awaiting_quote →
 // quoted) or delivering a result file (has_result false → true) — no matter
-// which page they're on, not just on /riwayat-pembayaran or /bayar, which
-// already poll themselves but only help while sitting on those pages.
+// which page they're on.
+//
+// This is also the single source of truth for the order list itself
+// (/riwayat-pembayaran reads `orders` from here instead of running its own
+// poll — same endpoint, no reason to fetch it twice).
 // ───────────────────────────────────────────────────────────────────────────
 
-const POLL_MS = 10000
+const POLL_MS = 2000
 const MAX_STORED = 20
 const STATUS_KEY = 'ecc-bts-order-status-seen'
 const RESULT_KEY = 'ecc-bts-order-item-result-seen'
@@ -41,6 +44,10 @@ export function NotificationProvider({ children }) {
   const { user, ready: authReady } = useAuth()
   const [notifications, setNotifications] = useState([])
   const [toast, setToast] = useState(null)
+  // null = belum pernah berhasil dimuat (dipakai /riwayat-pembayaran untuk
+  // membedakan "sedang memuat" dari "memang kosong").
+  const [orders, setOrders] = useState(null)
+  const [ordersError, setOrdersError] = useState(null)
   // Last-known status per order_no — a status transition only fires a
   // notification when the PREVIOUS value was 'awaiting_quote'. On a fresh
   // browser this map starts empty, so the first poll just records whatever
@@ -58,13 +65,16 @@ export function NotificationProvider({ children }) {
     setNotifications(readJSON(LIST_KEY, []))
   }, [])
 
-  const checkForUpdates = useCallback(async () => {
+  const refreshOrders = useCallback(async () => {
     let items
     try {
       ;({ items } = await api.orders.list())
-    } catch {
+      setOrdersError(null)
+    } catch (e) {
+      setOrdersError(e.message || 'Gagal memuat pesanan.')
       return
     }
+    setOrders(items)
 
     const seenStatus = lastStatuses.current
     const newlyQuoted = items.filter((o) => seenStatus[o.order_no] === 'awaiting_quote' && o.status === 'quoted')
@@ -119,11 +129,21 @@ export function NotificationProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    if (!authReady || !user) return undefined
-    checkForUpdates()
-    const interval = setInterval(checkForUpdates, POLL_MS)
+    if (!authReady) return undefined
+    if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- drops the previous account's orders on logout
+      setOrders(null)
+      return undefined
+    }
+    refreshOrders()
+    // Skip ticks while the tab is in the background — at 2s a tab left open
+    // overnight would otherwise fire ~43k requests. It catches up on the
+    // first tick after the user comes back.
+    const interval = setInterval(() => {
+      if (!document.hidden) refreshOrders()
+    }, POLL_MS)
     return () => clearInterval(interval)
-  }, [authReady, user, checkForUpdates])
+  }, [authReady, user, refreshOrders])
 
   // Auto-dismiss the toast.
   useEffect(() => {
@@ -149,6 +169,9 @@ export function NotificationProvider({ children }) {
     markAllRead,
     toast,
     dismissToast: () => setToast(null),
+    orders,
+    ordersError,
+    refreshOrders,
   }
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>

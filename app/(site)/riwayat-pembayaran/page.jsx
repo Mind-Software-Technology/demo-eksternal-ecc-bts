@@ -18,6 +18,7 @@ import PageHero from '../../../components/sections/PageHero'
 import Reveal from '../../../components/ui/Reveal'
 import { formatIDR } from '../../../data/format'
 import { useAuth, loginUrl } from '../../../context/auth'
+import { useNotifications } from '../../../context/notifications'
 import { api } from '../../../lib/api'
 import { setCachedOrder } from '../../../lib/checkoutOrderCache'
 
@@ -145,9 +146,10 @@ function TestimonialForm({ order, onSubmitted }) {
 export default function PaymentHistory() {
   const { user, ready } = useAuth()
   const router = useRouter()
-  const [orders, setOrders] = useState(null)
-  const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(false)
+  // Daftar pesanan datang dari NotificationProvider, yang sudah mem-polling
+  // endpoint yang sama tiap 2 detik untuk seluruh situs — jadi halaman ini
+  // otomatis realtime tanpa loop fetch sendiri.
+  const { orders, ordersError, refreshOrders } = useNotifications()
   const [cancellingNo, setCancellingNo] = useState(null)
   const [cancelError, setCancelError] = useState(null)
   const [acceptingNo, setAcceptingNo] = useState(null)
@@ -159,33 +161,6 @@ export default function PaymentHistory() {
     if (ready && !user) router.replace(loginUrl('/riwayat-pembayaran'))
   }, [ready, user, router])
 
-  useEffect(() => {
-    if (!user) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches the logged-in user's order history once auth resolves
-    setLoading(true)
-    setError(null)
-    api.orders
-      .list()
-      .then(({ items }) => setOrders(items))
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false))
-  }, [user])
-
-  // Auto-refresh while any order is still awaiting admin action (quoting or
-  // payment settling) — so the customer sees the update the moment admin
-  // sets a price, without needing to manually reload the page.
-  useEffect(() => {
-    const isWaiting = orders?.some((o) => ['awaiting_quote', 'quoted', 'awaiting_payment'].includes(o.status))
-    if (!user || !isWaiting) return
-    const interval = setInterval(() => {
-      api.orders
-        .list()
-        .then(({ items }) => setOrders(items))
-        .catch(() => {})
-    }, 8000)
-    return () => clearInterval(interval)
-  }, [user, orders])
-
   const cancelOrder = async (orderNo) => {
     setCancellingNo(orderNo)
     setCancelError(null)
@@ -196,10 +171,7 @@ export default function PaymentHistory() {
     } finally {
       // Refresh regardless of outcome — a failed cancel can still have synced
       // the order to its real (e.g. already-expired) status behind the scenes.
-      try {
-        const { items } = await api.orders.list()
-        setOrders(items)
-      } catch { /* keep showing the previous list if this refetch also fails */ }
+      await refreshOrders()
       setCancellingNo(null)
     }
   }
@@ -225,10 +197,7 @@ export default function PaymentHistory() {
     } catch (e) {
       setQuoteError(e.message || 'Gagal membatalkan permintaan.')
     } finally {
-      try {
-        const { items } = await api.orders.list()
-        setOrders(items)
-      } catch { /* keep showing the previous list if this refetch also fails */ }
+      await refreshOrders()
       setDecliningNo(null)
     }
   }
@@ -245,11 +214,13 @@ export default function PaymentHistory() {
 
       <section className="section">
         <div className="container">
-          {loading ? (
-            <p className="empty-note">Memuat riwayat pembayaran…</p>
-          ) : error ? (
-            <p className="empty-note">Gagal memuat riwayat: {error}</p>
-          ) : !orders || orders.length === 0 ? (
+          {orders === null ? (
+            ordersError ? (
+              <p className="empty-note">Gagal memuat riwayat: {ordersError}</p>
+            ) : (
+              <p className="empty-note">Memuat riwayat pembayaran…</p>
+            )
+          ) : orders.length === 0 ? (
             <Reveal className="cart-empty">
               <FiFileText className="cart-empty__ic" />
               <h2>Belum ada riwayat pembayaran</h2>
@@ -362,9 +333,7 @@ export default function PaymentHistory() {
                     </div>
                   )}
 
-                  {o.can_review && (
-                    <TestimonialForm order={o} onSubmitted={() => api.orders.list().then(({ items }) => setOrders(items))} />
-                  )}
+                  {o.can_review && <TestimonialForm order={o} onSubmitted={refreshOrders} />}
                   {o.has_testimonial && <p className="pay-record__thanks">Terima kasih atas testimoni Anda.</p>}
 
                   {o.status === 'awaiting_payment' && (
