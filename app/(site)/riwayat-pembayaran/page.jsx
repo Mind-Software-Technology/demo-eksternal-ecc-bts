@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -18,7 +18,6 @@ import PageHero from '../../../components/sections/PageHero'
 import Reveal from '../../../components/ui/Reveal'
 import { formatIDR } from '../../../data/format'
 import { useAuth, loginUrl } from '../../../context/auth'
-import { useNotifications } from '../../../context/notifications'
 import { api } from '../../../lib/api'
 import { setCachedOrder } from '../../../lib/checkoutOrderCache'
 
@@ -146,10 +145,9 @@ function TestimonialForm({ order, onSubmitted }) {
 export default function PaymentHistory() {
   const { user, ready } = useAuth()
   const router = useRouter()
-  // Daftar pesanan datang dari NotificationProvider, yang sudah mem-polling
-  // endpoint yang sama tiap 2 detik untuk seluruh situs — jadi halaman ini
-  // otomatis realtime tanpa loop fetch sendiri.
-  const { orders, ordersError, refreshOrders } = useNotifications()
+  // null = belum pernah berhasil dimuat (beda dari "memang tidak ada pesanan").
+  const [orders, setOrders] = useState(null)
+  const [ordersError, setOrdersError] = useState(null)
   const [cancellingNo, setCancellingNo] = useState(null)
   const [cancelError, setCancelError] = useState(null)
   const [acceptingNo, setAcceptingNo] = useState(null)
@@ -160,6 +158,30 @@ export default function PaymentHistory() {
   useEffect(() => {
     if (ready && !user) router.replace(loginUrl('/riwayat-pembayaran'))
   }, [ready, user, router])
+
+  // Status pesanan berubah karena aksi admin (penetapan harga) dan webhook
+  // Midtrans, jadi halaman ini menyegarkan dirinya sendiri tiap 2 detik.
+  // Polling-nya milik halaman ini, bukan provider notifikasi: halaman lain
+  // tidak butuh daftar pesanan, jadi tidak perlu ikut menanggung request-nya.
+  const refreshOrders = useCallback(async () => {
+    try {
+      const { items } = await api.orders.list()
+      setOrders(items)
+      setOrdersError(null)
+    } catch (e) {
+      setOrdersError(e.message || 'Gagal memuat riwayat.')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!user) return undefined
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches the logged-in user's orders once auth resolves, then polls
+    refreshOrders()
+    const interval = setInterval(() => {
+      if (!document.hidden) refreshOrders()
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [user, refreshOrders])
 
   const cancelOrder = async (orderNo) => {
     setCancellingNo(orderNo)

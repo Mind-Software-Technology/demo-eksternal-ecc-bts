@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../lib/api'
+import { unsubscribeFromPush } from '../lib/push'
 import { AuthContext } from './auth'
 
 export function AuthProvider({ children }) {
@@ -46,6 +47,10 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback(async () => {
+    // Lepas langganan push selagi sesi masih hidup — setelah logout endpoint
+    // DELETE-nya 401, dan langganan yatim itu berarti pemilik berikutnya
+    // perangkat ini ikut menerima notifikasi pesanan akun lama.
+    await unsubscribeFromPush()
     try {
       await api.auth.logout()
     } catch {
