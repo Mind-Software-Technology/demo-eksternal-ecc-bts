@@ -2277,6 +2277,11 @@
 
 .star-picker__star.is-on {
   color: var(--gold);
+}
+
+/* Harus menyasar <svg>-nya langsung: react-icons memasang fill="none" sebagai
+   atribut di svg, jadi fill dari <button> induknya tidak pernah diwarisi. */
+.star-picker__star.is-on svg {
   fill: var(--gold);
 }
 
