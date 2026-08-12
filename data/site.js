@@ -3,6 +3,19 @@
 // Replace placeholder contact details with real ones before launch.
 // ───────────────────────────────────────────────────────────────────────────
 
+// Dipakai sitemap, robots.txt, dan canonical URL. Harus persis satu host —
+// www dan non-www yang dua-duanya bisa dibuka dianggap Google sebagai dua
+// situs berbeda dan memecah peringkatnya.
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ecc-bts.id'
+).replace(/\/+$/, '')
+
+// Sitemap jalan di server (bukan browser), jadi tidak bisa pakai lib/api.js
+// yang bergantung pada cookie & localStorage — cukup base URL-nya saja.
+export const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL || 'https://api.ecc-bts.id'
+).replace(/\/+$/, '')
+
 export const site = {
   brand: 'ECC',
   brandFull: 'Best To Solution',
