@@ -100,7 +100,12 @@ export default function Cart() {
                         />
                       </label>
                       <Link href={`/produk/${it.slug}`} className="cart-item__thumb">
-                        <img src={it.image} alt={it.imageAlt || it.title} />
+                        <img
+                          src={it.image}
+                          alt={it.imageAlt || it.title}
+                          loading="lazy"
+                          decoding="async"
+                        />
                       </Link>
                       <div className="cart-item__info">
                         <Link href={`/produk/${it.slug}`} className="cart-item__title">

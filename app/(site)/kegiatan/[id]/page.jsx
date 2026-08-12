@@ -91,7 +91,7 @@ export default function EventDetail() {
           <Reveal className="event-detail__media" data-accent={event.category?.accent}>
             {event.flyer_url ? (
               /* eslint-disable-next-line @next/next/no-img-element -- flyer diunggah admin, ukurannya tidak diketahui saat build */
-              <img src={event.flyer_url} alt={event.title} />
+              <img src={event.flyer_url} alt={event.title} decoding="async" />
             ) : (
               <FiCalendar className="event-detail__media-fallback" aria-hidden="true" />
             )}

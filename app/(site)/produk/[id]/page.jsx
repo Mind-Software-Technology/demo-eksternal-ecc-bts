@@ -78,6 +78,7 @@ export default function ProductDetail() {
               className="pv-photo"
               src={service.image_url}
               alt={service.image_alt || service.title}
+              decoding="async"
             />
           </Reveal>
 

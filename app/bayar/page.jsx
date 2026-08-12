@@ -85,7 +85,7 @@ function BrandBadge({ logo, label }) {
   return (
     <span className="pay-brand-badge">
       {/* eslint-disable-next-line @next/next/no-img-element -- static local SVG, no need for next/image sizing */}
-      <img src={logo} alt={label} />
+      <img src={logo} alt={label} loading="lazy" decoding="async" />
     </span>
   )
 }
