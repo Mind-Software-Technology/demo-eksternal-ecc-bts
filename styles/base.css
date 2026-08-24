@@ -255,6 +255,11 @@ p {
 .btn:hover {
   transform: translateY(-2px);
 }
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .btn--primary {
   background: var(--g-accent);
   color: #fff;
@@ -262,6 +267,12 @@ p {
 }
 .btn--primary:hover {
   box-shadow: 0 18px 38px -10px rgba(255, 107, 0, 0.7);
+}
+.btn--primary:disabled {
+  background: var(--soft-2);
+  color: var(--muted);
+  box-shadow: none;
+  opacity: 1;
 }
 .btn--blue {
   background: var(--g-brand);

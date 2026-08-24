@@ -16,12 +16,14 @@ import {
   FiCopy,
   FiCheck,
   FiDownload,
+  FiUpload,
 } from 'react-icons/fi'
-import { FaQrcode, FaUniversity, FaWallet, FaStore } from 'react-icons/fa'
+import { FaQrcode, FaUniversity, FaWallet, FaStore, FaMoneyBillWave } from 'react-icons/fa'
 import Page from '../../components/layout/Page'
 import BrandMark from '../../components/layout/BrandMark'
 import { useCart } from '../../context/cart'
 import { useAuth, loginUrl } from '../../context/auth'
+import { useSiteConfig } from '../../hooks/useSiteConfig'
 import { formatIDR } from '../../data/format'
 import { api } from '../../lib/api'
 import { takeCachedOrder } from '../../lib/checkoutOrderCache'
@@ -101,6 +103,15 @@ const METHODS = [
   { id: 'cstore', label: 'Gerai Retail', desc: 'Alfamart, Indomaret', icon: FaStore },
 ]
 
+const MANUAL_METHOD = {
+  id: 'manual_transfer',
+  label: 'Transfer Bank Manual',
+  desc: 'Transfer ke rekening, lalu unggah bukti',
+  icon: FaMoneyBillWave,
+}
+
+const MAX_PROOF_BYTES = 10 * 1024 * 1024
+
 const TERMINAL_OK = ['settlement', 'capture']
 const TERMINAL_FAIL = ['expire', 'cancel', 'deny', 'failure']
 
@@ -115,11 +126,39 @@ function PaymentInner() {
   const { refresh: refreshCart } = useCart()
   const { user, ready: authReady } = useAuth()
   const router = useRouter()
+  const siteConfig = useSiteConfig()
+
+  // Default 'midtrans' — matches the backend's default so behavior stays
+  // unchanged until an admin explicitly switches the mode.
+  const paymentMode = siteConfig?.payment_method_mode || 'midtrans'
+  const bankAccounts = siteConfig?.bank_accounts || []
+  const methods = useMemo(() => {
+    // Nothing to transfer into yet — don't offer a manual option that can't
+    // actually be picked (admin turned the mode on but hasn't added a rekening).
+    if (bankAccounts.length === 0) return METHODS
+    if (paymentMode === 'manual') return [MANUAL_METHOD]
+    if (paymentMode === 'both') return [...METHODS, MANUAL_METHOD]
+    return METHODS
+  }, [paymentMode, bankAccounts.length])
 
   const [openMethod, setOpenMethod] = useState('qris')
   const [bank, setBank] = useState('bca')
   const [store, setStore] = useState('indomaret')
   const [ewallet, setEwallet] = useState('gopay')
+  const [bankAccountIndex, setBankAccountIndex] = useState(0)
+  const [proofUploading, setProofUploading] = useState(false)
+  const [proofError, setProofError] = useState(null)
+
+  // Once site-config loads, make sure the open accordion item is actually one
+  // of the methods currently offered (e.g. it defaulted to 'qris' but mode
+  // turned out to be 'manual').
+  useEffect(() => {
+    if (!methods.find((m) => m.id === openMethod)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- swaps the open accordion item once site-config loads and the current one turns out unavailable for this mode
+      setOpenMethod(methods[0]?.id ?? null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentMode])
 
   // Step 1 (/bayar/data) hands the just-created order off via an in-memory
   // cache so this page can render immediately instead of re-fetching it over
@@ -271,6 +310,9 @@ function PaymentInner() {
       } else if (openMethod === 'cstore') {
         payload.payment_type = 'cstore'
         payload.store = store
+      } else if (openMethod === 'manual_transfer') {
+        payload.payment_type = 'manual_transfer'
+        payload.bank_account_index = bankAccountIndex
       } else {
         payload.payment_type = 'qris'
       }
@@ -357,6 +399,25 @@ function PaymentInner() {
       setSwitchError(err.message || 'Gagal mengganti metode pembayaran.')
     } finally {
       setSwitching(false)
+    }
+  }
+
+  // No separate "kirim" step — picking a file uploads it immediately.
+  const selectProof = async (file) => {
+    if (!file) return
+    setProofError(null)
+    if (file.size > MAX_PROOF_BYTES) {
+      setProofError('Ukuran file maksimal 10MB.')
+      return
+    }
+    setProofUploading(true)
+    try {
+      const updated = await api.payments.uploadProof(order.order_no, file)
+      setPayment(updated)
+    } catch (err) {
+      setProofError(err.message || 'Gagal mengunggah bukti transfer. Coba lagi.')
+    } finally {
+      setProofUploading(false)
     }
   }
 
@@ -522,6 +583,62 @@ function PaymentInner() {
               <strong className="pay-amount__value">{formatIDR(total)}</strong>
             </div>
 
+            {payment.payment_type === 'manual_transfer' ? (
+              <div className="pay-method__body">
+                {!payment.has_proof ? (
+                  <>
+                    <div className="pay-static">
+                      <p>
+                        Transfer sejumlah <b>{formatIDR(total)}</b> ke rekening berikut,
+                        lalu unggah bukti transfernya di bawah:
+                      </p>
+                      <div className="pay-va">
+                        <span className="pay-va__label">
+                          {payment.bank_account?.bank_name || 'Bank'}
+                        </span>
+                        <span className="pay-va__value">
+                          <b>{payment.bank_account?.account_number || '—'}</b>
+                          <button
+                            type="button"
+                            className="pay-copy-btn"
+                            aria-label="Salin nomor rekening"
+                            onClick={() => copyToClipboard(payment.bank_account?.account_number || '', 'rek')}
+                          >
+                            {copiedField === 'rek' ? <FiCheck /> : <FiCopy />}
+                            {copiedField === 'rek' ? 'Tersalin' : 'Salin'}
+                          </button>
+                        </span>
+                      </div>
+                      {payment.bank_account?.account_holder && (
+                        <p className="pay-qr__hint">a.n. {payment.bank_account.account_holder}</p>
+                      )}
+                    </div>
+
+                    <div className="field">
+                      <label htmlFor="proof-file">Unggah Bukti Transfer</label>
+                      <input
+                        id="proof-file"
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.pdf"
+                        disabled={proofUploading}
+                        onChange={(e) => selectProof(e.target.files?.[0] || null)}
+                      />
+                      {proofUploading && (
+                        <p className="pay-qr__hint">
+                          <FiUpload /> Mengunggah bukti transfer…
+                        </p>
+                      )}
+                      {proofError && <p className="auth-modal__error">{proofError}</p>}
+                    </div>
+                  </>
+                ) : (
+                  <p className="pay-qr__hint">
+                    <FiClock /> Bukti transfer terkirim. Menunggu verifikasi admin — halaman
+                    ini akan otomatis diperbarui begitu diverifikasi.
+                  </p>
+                )}
+              </div>
+            ) : (
             <div className="pay-method__body">
               {payment.qr_url && (
                 <div className="pay-qr">
@@ -597,6 +714,7 @@ function PaymentInner() {
                 akan diperbarui otomatis begitu pembayaran diterima.
               </p>
             </div>
+            )}
 
             {switchError && <p className="auth-modal__error">{switchError}</p>}
             <button
@@ -663,7 +781,7 @@ function PaymentInner() {
           <h2 className="pay-section-label">Metode Pembayaran</h2>
 
           <div className="pay-methods">
-            {METHODS.map((m) => {
+            {methods.map((m) => {
               const Icon = m.icon
               const isOpen = openMethod === m.id
               return (
@@ -765,6 +883,52 @@ function PaymentInner() {
                               </button>
                             ))}
                           </div>
+                        </div>
+                      )}
+
+                      {m.id === 'manual_transfer' && (
+                        <div className="pay-static">
+                          <p>Pilih rekening tujuan transfer:</p>
+                          <div className="pay-chips pay-chips--stacked">
+                            {bankAccounts.map((acc, idx) => (
+                              <div
+                                key={idx}
+                                className={`pay-chip pay-chip--bank ${bankAccountIndex === idx ? 'is-selected' : ''}`}
+                              >
+                                <button
+                                  type="button"
+                                  className="pay-chip__select"
+                                  aria-pressed={bankAccountIndex === idx}
+                                  onClick={() => setBankAccountIndex(idx)}
+                                >
+                                  <span>
+                                    <b>{acc.bank_name}</b> — {acc.account_number}
+                                    <br />
+                                    <small>a.n. {acc.account_holder}</small>
+                                  </span>
+                                  {bankAccountIndex === idx && (
+                                    <FiCheck className="pay-chip__check pay-chip__check--inline" />
+                                  )}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="pay-copy-btn"
+                                  aria-label={`Salin nomor rekening ${acc.bank_name}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    copyToClipboard(acc.account_number, `bank-${idx}`)
+                                  }}
+                                >
+                                  {copiedField === `bank-${idx}` ? <FiCheck /> : <FiCopy />}
+                                  {copiedField === `bank-${idx}` ? 'Tersalin' : 'Salin'}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="pay-qr__hint">
+                            Setelah menekan tombol bayar, Anda bisa langsung mengunggah bukti
+                            transfer ke rekening yang dipilih.
+                          </p>
                         </div>
                       )}
                     </div>

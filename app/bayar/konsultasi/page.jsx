@@ -155,15 +155,16 @@ function KonsultasiInner() {
             <FaWhatsapp /> Konsultasi via WhatsApp
           </a>
 
-          {confirmed ? (
-            <button
-              type="button"
-              className="btn btn--primary btn--block btn--lg pay-confirm"
-              onClick={() => router.push(`/bayar?order_no=${encodeURIComponent(order.order_no)}`)}
-            >
-              Sudah Konsultasi, Lanjut ke Pembayaran <FiArrowRight />
-            </button>
-          ) : (
+          <button
+            type="button"
+            className="btn btn--primary btn--block btn--lg pay-confirm"
+            disabled={!confirmed}
+            onClick={() => router.push(`/bayar?order_no=${encodeURIComponent(order.order_no)}`)}
+          >
+            Sudah Konsultasi, Lanjut ke Pembayaran <FiArrowRight />
+          </button>
+
+          {!confirmed && (
             <p className="pay-section-hint" style={{ textAlign: 'center' }}>
               <FiCheckCircle /> Klik tombol WhatsApp di atas dulu untuk melanjutkan.
             </p>
