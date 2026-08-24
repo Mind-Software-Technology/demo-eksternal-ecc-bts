@@ -108,8 +108,17 @@ function UploadInner() {
     })
   }
 
-  // Step 1: pick a file — just previews it, nothing is sent to the server yet.
-  const handleSelect = (item, file) => {
+  const cancelPending = (item) => {
+    revokePreview(item.id)
+    setPending((p) => {
+      const { [item.id]: _removed, ...rest } = p
+      return rest
+    })
+  }
+
+  // Picking a file previews it and uploads it immediately — no separate
+  // "Kirim File" confirmation step.
+  const handleSelect = async (item, file) => {
     if (!file) return
     setItemErrors((e) => ({ ...e, [item.id]: null }))
 
@@ -123,21 +132,6 @@ function UploadInner() {
       setPreviewUrls((p) => ({ ...p, [item.id]: URL.createObjectURL(file) }))
     }
     setPending((p) => ({ ...p, [item.id]: file }))
-  }
-
-  const cancelPending = (item) => {
-    revokePreview(item.id)
-    setPending((p) => {
-      const { [item.id]: _removed, ...rest } = p
-      return rest
-    })
-  }
-
-  // Step 2: customer reviewed the preview and confirms — only now does the
-  // file actually upload.
-  const sendFile = async (item) => {
-    const file = pending[item.id]
-    if (!file) return
 
     setUploadingId(item.id)
     try {
@@ -219,22 +213,19 @@ function UploadInner() {
                       <span className="file-preview__size">{formatFileSize(file.size)}</span>
                     </div>
                     <div className="file-preview__actions">
-                      <button
-                        type="button"
-                        className="btn btn--primary btn--sm"
-                        onClick={() => sendFile(it)}
-                        disabled={isUploading}
-                      >
-                        <FiUpload /> {isUploading ? 'Mengirim…' : 'Kirim File'}
-                      </button>
-                      <button
-                        type="button"
-                        className="file-preview__clear"
-                        onClick={() => cancelPending(it)}
-                        disabled={isUploading}
-                      >
-                        <FiX /> Batal
-                      </button>
+                      {isUploading ? (
+                        <span className="pay-qr__hint">
+                          <FiUpload /> Mengunggah…
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="file-preview__clear"
+                          onClick={() => cancelPending(it)}
+                        >
+                          <FiX /> Batal
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
