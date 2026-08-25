@@ -77,3 +77,34 @@ export const getNavItems = (config) => {
   const missing = site.nav.filter((item) => !fromConfig.some((c) => c.to === item.to))
   return [...fromConfig, ...missing]
 }
+
+/**
+ * Teks hero halaman depan. Sumber utamanya kolom `hero` di site_configs yang
+ * diisi admin lewat Filament; nilai di bawah dipakai kalau /api/site-config
+ * belum sampai, gagal dihubungi, atau field-nya dikosongkan.
+ */
+export const HERO_FALLBACK = {
+  eyebrow: 'ECC • Best To Solution',
+  title: 'Temukan Layanan untuk',
+  title_highlight: 'Karya Ilmiah Anda',
+  subtitle:
+    'Dari cek similarity, olah data, hingga publikasi dan penerbitan buku — semua layanan dalam satu tempat, dikerjakan tim ahli yang profesional dan terpercaya.',
+  stat_works_label: 'Karya selesai',
+  stat_clients_label: 'Klien puas',
+  stat_quality_value: '100%',
+  stat_quality_label: 'Komitmen kualitas',
+}
+
+/**
+ * Gabungkan teks hero dari admin dengan teks bawaan. Nilai admin menang, TAPI
+ * hanya kalau benar-benar berisi — field yang dikosongkan (atau bertipe aneh
+ * dari JSON) jatuh ke bawaan. Hero adalah hal pertama yang dilihat pengunjung;
+ * satu field kosong tidak boleh menyisakan lubang di sana.
+ */
+export const getHero = (config) => {
+  const hero = { ...HERO_FALLBACK }
+  for (const [key, value] of Object.entries(config?.hero ?? {})) {
+    if (typeof value === 'string' && value.trim()) hero[key] = value
+  }
+  return hero
+}

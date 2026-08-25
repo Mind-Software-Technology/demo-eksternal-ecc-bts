@@ -10,6 +10,9 @@ export const formatIDR = (value) =>
     maximumFractionDigits: 0,
   }).format(value)
 
+/** Format a plain count with Indonesian thousand separators, e.g. 1500 → "1.500". */
+export const formatCount = (value) => new Intl.NumberFormat('id-ID').format(value ?? 0)
+
 /** Format an ISO date/time as e.g. "12 Agustus 2026, 09.00". */
 export const formatEventDate = (iso) =>
   iso

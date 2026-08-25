@@ -5,8 +5,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiSearch, FiCheckCircle, FiCalendar, FiStar, FiClock, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
-import { formatEventShortDate } from '../../data/format'
+import { formatEventShortDate, formatCount } from '../../data/format'
 import { api } from '../../lib/api'
+import { useSiteConfig } from '../../hooks/useSiteConfig'
+import { getHero } from '../../data/site'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 26 },
@@ -29,6 +31,13 @@ export default function Hero() {
   const [eventSlides, setEventSlides] = useState([])
   const [slideIndex, setSlideIndex] = useState(0)
   const router = useRouter()
+  const config = useSiteConfig()
+
+  const hero = getHero(config)
+
+  // Belum termuat -> tampilkan "—", bukan 0. Angka nol sekejap lalu melompat
+  // ke angka asli terbaca seperti datanya salah.
+  const stats = config?.stats
 
   useEffect(() => {
     api.categories.list().then(setCategories).catch(() => {})
@@ -103,7 +112,7 @@ export default function Hero() {
             initial="hidden"
             animate="show"
           >
-            ECC • Best To Solution
+            {hero.eyebrow}
           </motion.span>
 
           <motion.h1
@@ -113,8 +122,8 @@ export default function Hero() {
             animate="show"
             custom={1}
           >
-            Temukan Layanan untuk{' '}
-            <span className="text-grad">Karya Ilmiah Anda</span>
+            {hero.title}{' '}
+            <span className="text-grad">{hero.title_highlight}</span>
           </motion.h1>
 
           <motion.p
@@ -124,9 +133,7 @@ export default function Hero() {
             animate="show"
             custom={2}
           >
-            Dari cek similarity, olah data, hingga publikasi dan penerbitan buku —
-            semua layanan dalam satu tempat, dikerjakan tim ahli yang profesional
-            dan terpercaya.
+            {hero.subtitle}
           </motion.p>
 
           <motion.form
@@ -173,16 +180,16 @@ export default function Hero() {
             custom={5}
           >
             <div>
-              <b>1.500+</b>
-              <span>Karya selesai</span>
+              <b>{stats ? formatCount(stats.works_done) : '—'}</b>
+              <span>{hero.stat_works_label}</span>
             </div>
             <div>
-              <b>800+</b>
-              <span>Klien puas</span>
+              <b>{stats ? formatCount(stats.happy_clients) : '—'}</b>
+              <span>{hero.stat_clients_label}</span>
             </div>
             <div>
-              <b>100%</b>
-              <span>Komitmen kualitas</span>
+              <b>{hero.stat_quality_value}</b>
+              <span>{hero.stat_quality_label}</span>
             </div>
           </motion.div>
         </div>

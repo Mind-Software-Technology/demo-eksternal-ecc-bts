@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { getNavItems, site } from './site.js'
+import { getHero, getNavItems, site, HERO_FALLBACK } from './site.js'
 
 // Regresi yang dijaga di sini: backend menamai field-nya `url` (form Filament
 // ManageSiteConfig, DatabaseSeeder, migrasi 2026_08_24_150001). Frontend sempat
@@ -55,4 +55,37 @@ test('item yang tidak dikenal config tetap muncul, tidak hilang', () => {
 
 test('tanpa config sama sekali, pakai nav statis', () => {
   assert.deepEqual(getNavItems(undefined), site.nav)
+})
+
+// getHero: teks admin menang, tapi tidak boleh meninggalkan lubang di hero.
+
+test('teks dari admin menimpa teks bawaan', () => {
+  const hero = getHero({ hero: { title: 'Judul Baru', stat_quality_value: '99%' } })
+
+  assert.equal(hero.title, 'Judul Baru')
+  assert.equal(hero.stat_quality_value, '99%')
+  // Yang tidak diisi admin tetap memakai bawaannya.
+  assert.equal(hero.title_highlight, HERO_FALLBACK.title_highlight)
+})
+
+test('field kosong jatuh ke teks bawaan, bukan jadi hero melompong', () => {
+  const hero = getHero({
+    hero: { title: '', title_highlight: '   ', subtitle: null, eyebrow: 42 },
+  })
+
+  assert.equal(hero.title, HERO_FALLBACK.title)
+  assert.equal(hero.title_highlight, HERO_FALLBACK.title_highlight)
+  assert.equal(hero.subtitle, HERO_FALLBACK.subtitle)
+  assert.equal(hero.eyebrow, HERO_FALLBACK.eyebrow)
+})
+
+test('config belum termuat atau gagal -> seluruh teks bawaan', () => {
+  for (const config of [null, undefined, {}, { hero: {} }]) {
+    assert.deepEqual(getHero(config), HERO_FALLBACK)
+  }
+})
+
+test('getHero tidak pernah mengubah HERO_FALLBACK', () => {
+  getHero({ hero: { title: 'Diubah' } })
+  assert.equal(HERO_FALLBACK.title, 'Temukan Layanan untuk')
 })
