@@ -64,8 +64,14 @@ export const waLink = (text) =>
  * instead of disappearing — the config is additive, not a full replacement.
  */
 export const getNavItems = (config) => {
+  // Field-nya bernama `url`, bukan `path` — lihat form Filament ManageSiteConfig,
+  // DatabaseSeeder, dan migrasi 2026_08_24_150001 yang mengubah `path` lama jadi
+  // `url`. Salah baca kuncinya bukan cuma bikin menu kosong: `to` jadi undefined,
+  // dan <Link href={undefined}> membuat Next memanggil formatUrl(undefined) yang
+  // melempar TypeError saat render — satu item rusak menjatuhkan SELURUH halaman.
+  // filter() menahan itu tetap mustahil walau admin menyimpan baris tanpa URL.
   const fromConfig = config?.nav_items?.length
-    ? config.nav_items.map((n) => ({ label: n.label, to: n.path }))
+    ? config.nav_items.map((n) => ({ label: n.label, to: n.url })).filter((n) => n.to)
     : []
   if (!fromConfig.length) return site.nav
   const missing = site.nav.filter((item) => !fromConfig.some((c) => c.to === item.to))
