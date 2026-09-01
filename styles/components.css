@@ -1274,26 +1274,63 @@
 }
 
 /* ------------------------------------------------------- testimonials */
-.grid-testi {
+.testi-wrap {
+  position: relative;
+  z-index: 1;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.1rem;
-  margin-top: 2.6rem;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 2.6rem;
+  align-items: center;
+}
+.testi-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 2rem;
+  color: var(--ondark-body);
+}
+.testi-nav button {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.15rem;
+  color: #fff;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.testi-nav button:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: #fff;
+}
+.testi-nav span {
+  font-family: var(--font-display);
+  font-weight: 700;
+  min-width: 3.2rem;
+  text-align: center;
 }
 .testi-card {
   position: relative;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  padding: 1.4rem;
+  padding: 1.8rem;
   box-shadow: var(--shadow-sm);
   /* Kartu putih ini duduk di dalam .section--dark, yang mewariskan warna teks
      terang. Tanpa baris ini, elemen yang tidak menyetel warnanya sendiri
      (mis. nama pemberi testimoni) jadi nyaris tak terbaca di atas putih. */
   color: var(--ink);
+  /* Tinggi ditahan supaya kartu tidak melompat-lompat saat berganti antara
+     testimoni pendek dan panjang. */
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
 }
 .testi-card__quote {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   color: var(--blue-300);
   margin-bottom: 0.5rem;
 }
@@ -1305,13 +1342,16 @@
 }
 .testi-card p {
   color: var(--ink-soft);
-  font-size: 0.98rem;
+  font-size: 1.05rem;
 }
 .testi-card__author {
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  margin-top: 1rem;
+  /* Nama menempel di dasar kartu, jadi posisinya tetap walau panjang
+     testimoninya berbeda-beda. */
+  margin-top: auto;
+  padding-top: 1.2rem;
 }
 .testi-card__avatar {
   width: 40px;
@@ -1605,9 +1645,12 @@
   .grid-services,
   .grid-why,
   .process,
-  .stats,
-  .grid-testi {
+  .stats {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .testi-wrap {
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
   }
   .footer__grid {
     grid-template-columns: 1fr 1fr;
@@ -1628,8 +1671,7 @@
   .grid-services,
   .grid-why,
   .process,
-  .stats,
-  .grid-testi {
+  .stats {
     grid-template-columns: 1fr;
   }
   .footer__grid {
