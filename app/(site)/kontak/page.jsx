@@ -180,6 +180,8 @@ export default function Contact() {
   const email = config?.contact_email || site.email
   const address = config?.address || site.address
   const waHref = config?.social_links?.whatsapp || waLink()
+  // Diisi admin lewat panel; kalau kosong, kotak peta tetap jadi placeholder.
+  const mapsUrl = config?.maps_embed_url
 
   return (
     <Page title="Kontak — ECC-BTS">
@@ -257,10 +259,20 @@ export default function Contact() {
               </div>
 
               <div className="map-embed">
-                <div>
-                  <FiMapPin />
-                  <div>Peta lokasi (demo)</div>
-                </div>
+                {mapsUrl ? (
+                  <iframe
+                    src={mapsUrl}
+                    title={`Peta lokasi ${address}`}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    allowFullScreen
+                  />
+                ) : (
+                  <div>
+                    <FiMapPin />
+                    <div>Peta lokasi (demo)</div>
+                  </div>
+                )}
               </div>
             </div>
           </Reveal>

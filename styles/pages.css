@@ -891,6 +891,13 @@
   color: var(--blue-500);
   margin-bottom: 0.4rem;
 }
+.map-embed iframe {
+  place-self: stretch;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
 
 /* --------------------------------------------------------------- faq */
 .faq {
