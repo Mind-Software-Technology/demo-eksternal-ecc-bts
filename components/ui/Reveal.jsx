@@ -1,5 +1,6 @@
 'use client'
 
+import { Children } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 
 /**
@@ -45,7 +46,14 @@ export default function Reveal({
 /** Container that staggers its <Reveal> / motion children. */
 export function RevealGroup({ children, className, stagger = 0.1, ...rest }) {
   const reduce = useReducedMotion()
-  if (reduce) {
+
+  // Sebagian besar grid di situs ini diisi dari API, jadi hidup dalam keadaan
+  // kosong. Elemen setinggi 0 tetap dilaporkan "masuk viewport" oleh
+  // IntersectionObserver — dengan once:true, animasinya terlanjur dianggap
+  // selesai sebelum ada satu pun anak, dan anak yang menyusul mounting tetap
+  // memakai varian "hidden" selamanya: kartu ada, memakan ruang, tapi
+  // opacity-nya 0. Selama masih kosong, jangan pasang pengamatnya dulu.
+  if (reduce || Children.count(children) === 0) {
     return (
       <div className={className} {...rest}>
         {children}
