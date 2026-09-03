@@ -1,17 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { RevealGroup, RevealItem } from '../ui/Reveal'
 import Counter from '../ui/Counter'
-import { api } from '../../lib/api'
+import { useStats } from '../../hooks/useStats'
 
 /** Dark band with animated counters. */
 export default function StatsBand() {
-  const [stats, setStats] = useState([])
-
-  useEffect(() => {
-    api.stats.list().then(setStats).catch(() => {})
-  }, [])
+  const stats = useStats()
 
   return (
     <section className="section section--dark">

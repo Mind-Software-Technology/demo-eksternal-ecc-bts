@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { FiSearch, FiCheckCircle, FiCalendar, FiStar, FiClock, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
-import { formatEventShortDate, formatCount } from '../../data/format'
+import { motion } from 'framer-motion'
+import { FiSearch } from 'react-icons/fi'
+import { formatCount } from '../../data/format'
 import { api } from '../../lib/api'
 import { useSiteConfig } from '../../hooks/useSiteConfig'
+import { useCategories } from '../../hooks/useCategories'
 import { getHero } from '../../data/site'
+import EventCoverflow from './EventCoverflow'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 26 },
@@ -27,7 +29,7 @@ const SLIDE_INTERVAL_MS = 4500
 
 export default function Hero() {
   const [q, setQ] = useState('')
-  const [categories, setCategories] = useState([])
+  const categories = useCategories()
   const [eventSlides, setEventSlides] = useState([])
   const [slideIndex, setSlideIndex] = useState(0)
   const router = useRouter()
@@ -40,10 +42,6 @@ export default function Hero() {
   const stats = config?.stats
 
   useEffect(() => {
-    api.categories.list().then(setCategories).catch(() => {})
-  }, [])
-
-  useEffect(() => {
     api.events
       .list()
       .then((items) => {
@@ -53,8 +51,6 @@ export default function Hero() {
             src: e.flyer_url,
             alt: e.title,
             title: e.title,
-            startsAt: e.starts_at,
-            endsAt: e.ends_at,
           }))
         setEventSlides(withFlyer)
       })
@@ -78,18 +74,6 @@ export default function Hero() {
   const goToPrevSlide = () => goToSlide(slideIndex - 1)
   const goToNextSlide = () => goToSlide(slideIndex + 1)
 
-  const activeSlide = slides[slideIndex % slides.length]
-  const isEventSlide = eventSlides.length > 0
-  const hasEventDates = isEventSlide && Boolean(activeSlide.startsAt)
-  const sameDay =
-    hasEventDates &&
-    activeSlide.endsAt &&
-    new Date(activeSlide.startsAt).toDateString() === new Date(activeSlide.endsAt).toDateString()
-  const eventEndLabel =
-    hasEventDates && activeSlide.endsAt && !sameDay
-      ? `s.d. ${formatEventShortDate(activeSlide.endsAt)}`
-      : 'Jadwal Kegiatan'
-
   const onSearch = (e) => {
     e.preventDefault()
     const term = q.trim()
@@ -103,7 +87,8 @@ export default function Hero() {
         <span className="blob b2" />
       </div>
 
-      <div className="container hero__inner">
+      <div className="container">
+        <div className="hero__inner">
         {/* Copy */}
         <div className="hero__copy">
           <motion.span
@@ -136,13 +121,28 @@ export default function Hero() {
             {hero.subtitle}
           </motion.p>
 
-          <motion.form
-            className="hero__search"
-            onSubmit={onSearch}
+          <motion.div
+            className="hero__chips"
             variants={fadeUp}
             initial="hidden"
             animate="show"
             custom={3}
+          >
+            <span className="hero__chips-label">Populer:</span>
+            {categories.map((c) => (
+              <Link key={c.slug} href={`/produk?cat=${c.slug}`} className="hero__chip">
+                {c.title}
+              </Link>
+            ))}
+          </motion.div>
+
+          <motion.form
+            className="hero__search hero__search--wide"
+            onSubmit={onSearch}
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
+            custom={4}
           >
             <FiSearch className="hero__search-ic" aria-hidden="true" />
             <input
@@ -156,21 +156,6 @@ export default function Hero() {
               Cari
             </button>
           </motion.form>
-
-          <motion.div
-            className="hero__chips"
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            custom={4}
-          >
-            <span className="hero__chips-label">Populer:</span>
-            {categories.map((c) => (
-              <Link key={c.slug} href={`/produk?cat=${c.slug}`} className="hero__chip">
-                {c.title}
-              </Link>
-            ))}
-          </motion.div>
 
           <motion.div
             className="hero__trust"
@@ -201,102 +186,15 @@ export default function Hero() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="hero__media">
-            <Link href="/kegiatan" className="hero__media-link" aria-label="Lihat kegiatan ECC">
-              <AnimatePresence>
-                <motion.img
-                  key={activeSlide.src}
-                  src={activeSlide.src}
-                  alt={activeSlide.alt || 'Kegiatan ECC'}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.7, ease: 'easeInOut' }}
-                />
-              </AnimatePresence>
-            </Link>
-
-            {slides.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  className="hero__media-nav hero__media-nav--prev"
-                  aria-label="Gambar sebelumnya"
-                  onClick={goToPrevSlide}
-                >
-                  <FiChevronLeft />
-                </button>
-                <button
-                  type="button"
-                  className="hero__media-nav hero__media-nav--next"
-                  aria-label="Gambar berikutnya"
-                  onClick={goToNextSlide}
-                >
-                  <FiChevronRight />
-                </button>
-
-                <span className="hero__media-dots">
-                  {slides.map((s, i) => (
-                    <button
-                      key={s.src}
-                      type="button"
-                      className={i === slideIndex ? 'is-active' : ''}
-                      aria-label={`Tampilkan gambar ${i + 1}`}
-                      aria-current={i === slideIndex}
-                      onClick={() => goToSlide(i)}
-                    />
-                  ))}
-                </span>
-              </>
-            )}
-          </div>
-
-          <div className="hero__media-badge hero__media-badge--rating">
-            {isEventSlide ? (
-              <>
-                <FiCalendar />
-                <span>
-                  {activeSlide.title}
-                  <small>Kegiatan ECC</small>
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="hero__rating-stars" aria-hidden="true">
-                  <FiStar />
-                  <FiStar />
-                  <FiStar />
-                  <FiStar />
-                  <FiStar />
-                </span>
-                <span>
-                  4,9 / 5
-                  <small>Rating klien</small>
-                </span>
-              </>
-            )}
-          </div>
-
-          <div className={`hero__media-badge hero__media-badge--quality ${hasEventDates ? 'is-event' : ''}`}>
-            {hasEventDates ? (
-              <>
-                <FiClock />
-                <span>
-                  {formatEventShortDate(activeSlide.startsAt)}
-                  <small>{eventEndLabel}</small>
-                </span>
-              </>
-            ) : (
-              <>
-                <FiCheckCircle />
-                <span>
-                  100%
-                  <small>Komitmen Kualitas</small>
-                </span>
-              </>
-            )}
-          </div>
+          <EventCoverflow
+            slides={slides}
+            index={slideIndex}
+            onPrev={goToPrevSlide}
+            onNext={goToNextSlide}
+            onSelect={goToSlide}
+          />
         </motion.div>
+        </div>
       </div>
     </section>
   )

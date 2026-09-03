@@ -165,7 +165,7 @@ export default function AuthForm({ mode }) {
             </div>
           </div>
 
-          <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={busy}>
+          <button type="submit" className="btn btn--primary btn--block" disabled={busy}>
             {busy ? 'Memproses…' : mode === 'login' ? 'Masuk' : 'Daftar'}
           </button>
         </form>

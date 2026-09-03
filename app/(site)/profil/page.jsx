@@ -8,6 +8,14 @@ import PageHero from '../../../components/sections/PageHero'
 import Reveal from '../../../components/ui/Reveal'
 import { useAuth, loginUrl } from '../../../context/auth'
 
+const initials = (name) =>
+  name
+    .split(' ')
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+
 export default function Profile() {
   const { user, ready, updateProfile, resendVerification } = useAuth()
   const router = useRouter()
@@ -69,9 +77,19 @@ export default function Profile() {
         subtitle="Kelola nama dan nomor WhatsApp yang digunakan untuk pesanan Anda."
       />
 
-      <section className="section">
+      <section className="section section--tight-top">
         <div className="container profile-page">
           <Reveal>
+            <div className="profile-header">
+              <span className="profile-avatar" aria-hidden="true">
+                {initials(user.name)}
+              </span>
+              <div>
+                <h2>{user.name}</h2>
+                <span>{user.email}</span>
+              </div>
+            </div>
+
             <div
               className={`profile-verify ${user.email_verified ? 'profile-verify--ok' : 'profile-verify--pending'}`}
             >
@@ -98,6 +116,7 @@ export default function Profile() {
             </div>
 
             <div className="form-card">
+              <h3 className="form-card__title">Informasi Akun</h3>
               {saved && (
                 <div className="form__success">
                   <FiCheckCircle />
@@ -137,10 +156,12 @@ export default function Profile() {
                   </div>
                 </div>
 
-                <button type="submit" className="btn btn--primary btn--lg" disabled={busy}>
+                <button type="submit" className="btn btn--primary btn--block" disabled={busy}>
                   {busy ? 'Menyimpan…' : 'Simpan Perubahan'}
                 </button>
-                <p className="form__note">Email tidak dapat diubah.</p>
+                <p className="form__note">
+                  Email tidak dapat diubah karena digunakan sebagai identitas login Anda.
+                </p>
               </form>
             </div>
           </Reveal>

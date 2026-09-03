@@ -11,6 +11,7 @@ import { RevealGroup, RevealItem } from '../../../components/ui/Reveal'
 import Rating from '../../../components/ui/Rating'
 import { useCart } from '../../../context/cart'
 import { useAuth, loginUrl } from '../../../context/auth'
+import { useCategories } from '../../../hooks/useCategories'
 import { api } from '../../../lib/api'
 
 function ProductsContent() {
@@ -30,14 +31,10 @@ function ProductsContent() {
   const active = params.get('cat') || 'all'
   const query = (params.get('q') || '').trim()
 
-  const [categories, setCategories] = useState([])
+  const categories = useCategories()
   const [services, setServices] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  useEffect(() => {
-    api.categories.list().then(setCategories).catch(() => {})
-  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -89,7 +86,7 @@ function ProductsContent() {
         subtitle="Layanan lengkap untuk mendukung karya ilmiah Anda — dipilih sesuai kebutuhan, dikerjakan oleh tim ahli."
       />
 
-      <section className="section section--soft">
+      <section className="section section--soft section--tight-top">
         <div className="container">
           {/* Category filter */}
           <div className="filter-tabs" role="tablist" aria-label="Filter kategori">

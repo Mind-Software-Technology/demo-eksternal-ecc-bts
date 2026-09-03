@@ -5,7 +5,7 @@ import { Icon } from '../../data/icons'
 /** Compact service card used in grids (Home & Products preview). */
 export default function ServiceCard({ service }) {
   return (
-    <article className="service-card" data-accent={service.accent}>
+    <article className="service-card">
       <div className="service-card__icon">
         <Icon name={service.icon} />
       </div>

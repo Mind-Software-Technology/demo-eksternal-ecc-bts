@@ -127,7 +127,7 @@ export default function Footer() {
       </div>
 
       <div className="footer__bottom">
-        © {2026} {config?.brand_name || site.brand} — {site.brandFull}. Demo website.
+        © {new Date().getFullYear()} {config?.brand_name || site.brand} — {site.brandFull}.
         Seluruh hak cipta dilindungi.
       </div>
     </footer>

@@ -1,18 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { RevealGroup, RevealItem } from '../ui/Reveal'
 import SectionHeading from '../ui/SectionHeading'
 import { Icon } from '../../data/icons'
-import { api } from '../../lib/api'
+import { useAdvantages } from '../../hooks/useAdvantages'
 
 /** The trust advantages. */
 export default function WhyChooseUs() {
-  const [advantages, setAdvantages] = useState([])
-
-  useEffect(() => {
-    api.advantages.list().then(setAdvantages).catch(() => {})
-  }, [])
+  const advantages = useAdvantages()
 
   return (
     <section className="section section--soft">
