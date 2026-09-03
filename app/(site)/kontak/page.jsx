@@ -19,6 +19,7 @@ import SectionHeading from '../../../components/ui/SectionHeading'
 import { site, waLink } from '../../../data/site'
 import { api } from '../../../lib/api'
 import { useSiteConfig } from '../../../hooks/useSiteConfig'
+import { useFaqs } from '../../../hooks/useFaqs'
 
 function ContactForm() {
   const [services, setServices] = useState([])
@@ -169,19 +170,18 @@ function FaqItem({ item, open, onToggle }) {
 
 export default function Contact() {
   const [openFaq, setOpenFaq] = useState(0)
-  const [faqs, setFaqs] = useState([])
+  const faqs = useFaqs()
   const config = useSiteConfig()
-
-  useEffect(() => {
-    api.faqs.list().then(setFaqs).catch(() => {})
-  }, [])
 
   const phoneDisplay = config?.contact_phone || site.phoneDisplay
   const email = config?.contact_email || site.email
   const address = config?.address || site.address
   const waHref = config?.social_links?.whatsapp || waLink()
-  // Diisi admin lewat panel; kalau kosong, kotak peta tetap jadi placeholder.
-  const mapsUrl = config?.maps_embed_url
+  // Admin bisa isi embed URL kustom lewat panel; kalau kosong, buat otomatis
+  // dari alamat lewat pencarian Google Maps (tidak perlu API key).
+  const mapsUrl =
+    config?.maps_embed_url ||
+    (address ? `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed` : null)
 
   return (
     <Page title="Kontak — ECC-BTS">

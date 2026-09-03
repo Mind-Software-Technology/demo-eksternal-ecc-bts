@@ -5,7 +5,7 @@ import { FiChevronLeft, FiChevronRight, FiStar } from 'react-icons/fi'
 import { FaQuoteLeft } from 'react-icons/fa6'
 import { motion, useReducedMotion } from 'framer-motion'
 import SectionHeading from '../ui/SectionHeading'
-import { api } from '../../lib/api'
+import { useTestimonials } from '../../hooks/useTestimonials'
 
 const ROTATE_MS = 6000
 
@@ -19,13 +19,9 @@ const initials = (name) =>
 
 /** Testimonials: satu kartu tampil bergantian, dengan tombol maju/mundur. */
 export default function Testimonials() {
-  const [testimonials, setTestimonials] = useState([])
+  const testimonials = useTestimonials()
   const [index, setIndex] = useState(0)
   const reduce = useReducedMotion()
-
-  useEffect(() => {
-    api.testimonials.list().then(setTestimonials).catch(() => {})
-  }, [])
 
   // Timer di-pasang ulang tiap kali index berubah, jadi menekan tombol
   // sekaligus me-reset hitungannya — kartu tidak melompat sedetik setelah

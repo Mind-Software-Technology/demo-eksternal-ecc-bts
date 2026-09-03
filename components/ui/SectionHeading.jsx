@@ -7,9 +7,10 @@ export default function SectionHeading({
   subtitle,
   center = true,
   dark = false,
+  className = '',
 }) {
   return (
-    <Reveal className={`heading ${center ? 'heading--center' : ''}`}>
+    <Reveal className={`heading ${center ? 'heading--center' : ''} ${className}`}>
       {eyebrow && <span className="eyebrow">{eyebrow}</span>}
       <h2 style={{ marginTop: '0.9rem', color: dark ? '#fff' : undefined }}>
         {title}

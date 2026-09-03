@@ -10,10 +10,11 @@ import CTABand from '../../../components/sections/CTABand'
 import { RevealGroup, RevealItem } from '../../../components/ui/Reveal'
 import { formatEventDate } from '../../../data/format'
 import { waLink } from '../../../data/site'
+import { useCategories } from '../../../hooks/useCategories'
 import { api } from '../../../lib/api'
 
 export default function Kegiatan() {
-  const [categories, setCategories] = useState([])
+  const categories = useCategories()
   const [events, setEvents] = useState([])
   const [active, setActive] = useState('all')
   const [loading, setLoading] = useState(true)
@@ -21,11 +22,9 @@ export default function Kegiatan() {
   const [now] = useState(() => Date.now())
 
   useEffect(() => {
-    Promise.all([api.categories.list().catch(() => []), api.events.list()])
-      .then(([cats, items]) => {
-        setCategories(cats)
-        setEvents(items)
-      })
+    api.events
+      .list()
+      .then(setEvents)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
   }, [])
@@ -102,7 +101,7 @@ export default function Kegiatan() {
         subtitle="Ikuti workshop, webinar, dan agenda kolaborasi pendidikan dari ECC — terbaru dan yang sudah berlalu."
       />
 
-      <section className="section">
+      <section className="section section--tight-top">
         <div className="container">
           <div className="filter-tabs" role="tablist" aria-label="Filter kategori kegiatan">
             {filters.map((f) => (

@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { FiTarget, FiHeart, FiAward, FiShield, FiZap } from 'react-icons/fi'
 import Page from '../../../components/layout/Page'
 import PageHero from '../../../components/sections/PageHero'
@@ -9,7 +8,7 @@ import CTABand from '../../../components/sections/CTABand'
 import Reveal from '../../../components/ui/Reveal'
 import SectionHeading from '../../../components/ui/SectionHeading'
 import { site } from '../../../data/site'
-import { api } from '../../../lib/api'
+import { useAboutStats } from '../../../hooks/useAboutStats'
 
 const values = [
   {
@@ -30,11 +29,7 @@ const values = [
 ]
 
 export default function About() {
-  const [aboutStats, setAboutStats] = useState(null)
-
-  useEffect(() => {
-    api.aboutStats.show().then(setAboutStats).catch(() => {})
-  }, [])
+  const aboutStats = useAboutStats()
 
   return (
     <Page title="Tentang Kami — ECC-BTS">

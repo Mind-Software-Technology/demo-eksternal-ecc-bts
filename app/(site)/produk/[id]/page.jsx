@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { FiCheck, FiShoppingCart, FiArrowLeft } from 'react-icons/fi'
+import { FiCheck, FiShoppingCart, FiArrowLeft, FiTag } from 'react-icons/fi'
 import Page from '../../../../components/layout/Page'
 import PageHero from '../../../../components/sections/PageHero'
 import CTABand from '../../../../components/sections/CTABand'
@@ -71,7 +71,7 @@ export default function ProductDetail() {
         subtitle={service.tagline}
       />
 
-      <section className="section product-detail-section">
+      <section className="section product-detail-section section--tight-top">
         <div className="container product-detail">
           <Reveal className="product-detail__visual" data-accent={service.accent}>
             <img
@@ -91,8 +91,11 @@ export default function ProductDetail() {
             </div>
 
             <p className="product-detail__quote-note">
-              Harga menyesuaikan kebutuhan tiap naskah. Tambahkan ke keranjang, lalu
-              konsultasikan dengan tim kami lewat WhatsApp untuk mendapat penawaran.
+              <FiTag className="product-detail__quote-note-ic" aria-hidden="true" />
+              <span>
+                <b>Harga menyesuaikan kebutuhan.</b> Tambahkan ke keranjang, lalu
+                konsultasikan dengan tim kami lewat WhatsApp untuk mendapat penawaran.
+              </span>
             </p>
 
             <p>{service.description}</p>

@@ -1,18 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { RevealGroup, RevealItem } from '../ui/Reveal'
 import SectionHeading from '../ui/SectionHeading'
-import { Icon } from '../../data/icons'
-import { api } from '../../lib/api'
+import { useProcessSteps } from '../../hooks/useProcessSteps'
 
 /** How it works. */
 export default function ProcessSteps() {
-  const [processSteps, setProcessSteps] = useState([])
-
-  useEffect(() => {
-    api.processSteps.list().then(setProcessSteps).catch(() => {})
-  }, [])
+  const processSteps = useProcessSteps()
 
   return (
     <section className="section">
@@ -25,14 +19,13 @@ export default function ProcessSteps() {
         <RevealGroup className="process">
           {processSteps.map((p) => (
             <RevealItem className="process-step" key={p.id}>
-              <span className="process-step__ic" aria-hidden="true">
-                <Icon name={p.icon} />
-              </span>
               <div className="process-step__num">
                 {String(p.step_number).padStart(2, '0')}
               </div>
-              <h3>{p.title}</h3>
-              <p>{p.description}</p>
+              <div className="process-step__body">
+                <h3>{p.title}</h3>
+                <p>{p.description}</p>
+              </div>
             </RevealItem>
           ))}
         </RevealGroup>

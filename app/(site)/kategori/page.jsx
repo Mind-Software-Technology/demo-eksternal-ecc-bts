@@ -8,19 +8,18 @@ import PageHero from '../../../components/sections/PageHero'
 import CTABand from '../../../components/sections/CTABand'
 import { RevealGroup, RevealItem } from '../../../components/ui/Reveal'
 import { Icon } from '../../../data/icons'
+import { useCategories } from '../../../hooks/useCategories'
 import { api } from '../../../lib/api'
 
 export default function Categories() {
-  const [categories, setCategories] = useState([])
+  const categories = useCategories()
   const [services, setServices] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([api.categories.list(), api.services.list({ limit: 100 })])
-      .then(([cats, { items }]) => {
-        setCategories(cats)
-        setServices(items)
-      })
+    api.services
+      .list({ limit: 100 })
+      .then(({ items }) => setServices(items))
       .finally(() => setLoading(false))
   }, [])
 
@@ -32,7 +31,7 @@ export default function Categories() {
         subtitle="Telusuri layanan kami berdasarkan kebutuhan Anda — dikelompokkan agar lebih mudah menemukan solusi yang tepat."
       />
 
-      <section className="section">
+      <section className="section section--tight-top">
         <div className="container">
           {loading ? (
             <p className="empty-note">Memuat kategori…</p>
@@ -41,7 +40,7 @@ export default function Categories() {
               {categories.map((c) => {
                 const inCategory = services.filter((s) => s.category?.slug === c.slug)
                 return (
-                  <RevealItem className="category-card" key={c.slug} data-accent={c.accent}>
+                  <RevealItem className="category-card" key={c.slug}>
                     <div className="category-card__top">
                       <span className="category-card__ic">
                         <Icon name={c.icon} />

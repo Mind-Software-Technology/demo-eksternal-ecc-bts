@@ -9,6 +9,7 @@ import {
   FiEdit3,
   FiMonitor,
   FiBookOpen,
+  FiBook,
   FiShield,
   FiClock,
   FiUsers,
@@ -33,6 +34,8 @@ import {
   FiFileText,
   FiLayers,
   FiDollarSign,
+  FiTag,
+  FiClipboard,
 } from 'react-icons/fi'
 import {
   FaWhatsapp,
@@ -51,6 +54,7 @@ const ICONS = {
   FiEdit3,
   FiMonitor,
   FiBookOpen,
+  FiBook,
   // advantages / misc
   FiShield,
   FiClock,
@@ -76,6 +80,8 @@ const ICONS = {
   FiFileText,
   FiLayers,
   FiDollarSign,
+  FiTag,
+  FiClipboard,
   // brand
   FaWhatsapp,
   FaInstagram,
