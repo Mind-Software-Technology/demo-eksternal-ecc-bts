@@ -1,6 +1,6 @@
 'use client'
 
-import { FiTarget, FiHeart, FiAward, FiShield, FiZap } from 'react-icons/fi'
+import { FiAward, FiShield, FiZap } from 'react-icons/fi'
 import Page from '../../../components/layout/Page'
 import PageHero from '../../../components/sections/PageHero'
 import WhyChooseUs from '../../../components/sections/WhyChooseUs'
@@ -9,6 +9,14 @@ import Reveal from '../../../components/ui/Reveal'
 import SectionHeading from '../../../components/ui/SectionHeading'
 import { site } from '../../../data/site'
 import { useAboutStats } from '../../../hooks/useAboutStats'
+
+const misi = [
+  'Menyelenggarakan layanan pengembangan kompetensi yang berkualitas dan berkelanjutan.',
+  'Menyediakan layanan pengolahan data dan publikasi ilmiah yang profesional dan terpercaya.',
+  'Mendukung peningkatan kualitas karya akademik melalui layanan penyuntingan, proofreading dan pemeriksaan naskah.',
+  'Memfasilitasi penerbitan buku dan karya ilmiah yang bermanfaat bagi pengembangan ilmu pengetahuan.',
+  'Membangun kolaborasi yang produktif untuk kemajuan pendidikan, penelitian dan literasi.',
+]
 
 const values = [
   {
@@ -122,48 +130,30 @@ export default function About() {
             title="Arah dan Tujuan Kami"
             dark
           />
-          <div className="mv-grid">
-            <Reveal className="mv-card mv-card--vision">
-              <div className="mv-card__ic">
-                <FiTarget />
-              </div>
-              <h3>Visi</h3>
-              <p style={{ marginTop: '0.6rem' }}>
-                Menjadi pusat kolaborasi pendidikan yang unggul, profesional,
-                dan terpercaya dalam pengembangan kompetensi, pengolahan data,
-                publikasi ilmiah, serta penerbitan karya akademik untuk
-                mendukung kemajuan pendidikan dan penelitian.
-              </p>
-            </Reveal>
-            <Reveal className="mv-card" delay={0.12}>
-              <div className="mv-card__ic">
-                <FiHeart />
-              </div>
-              <h3>Misi</h3>
-              <ol className="mv-card__list">
-                <li>
-                  Menyelenggarakan layanan pengembangan kompetensi yang
-                  berkualitas dan berkelanjutan.
-                </li>
-                <li>
-                  Menyediakan layanan pengolahan data dan publikasi ilmiah
-                  yang profesional dan terpercaya.
-                </li>
-                <li>
-                  Mendukung peningkatan kualitas karya akademik melalui
-                  layanan penyuntingan, proofreading dan pemeriksaan naskah.
-                </li>
-                <li>
-                  Memfasilitasi penerbitan buku dan karya ilmiah yang
-                  bermanfaat bagi pengembangan ilmu pengetahuan.
-                </li>
-                <li>
-                  Membangun kolaborasi yang produktif untuk kemajuan
-                  pendidikan, penelitian dan literasi.
-                </li>
-              </ol>
-            </Reveal>
-          </div>
+          <Reveal className="mv-vision">
+            <span className="mv-vision__label">Visi</span>
+            <p className="mv-vision__text">
+              “Menjadi pusat kolaborasi pendidikan yang unggul, profesional,
+              dan terpercaya dalam pengembangan kompetensi, pengolahan data,
+              publikasi ilmiah, serta penerbitan karya akademik untuk
+              mendukung kemajuan pendidikan dan penelitian.”
+            </p>
+          </Reveal>
+
+          <Reveal className="mv-mission" delay={0.12}>
+            <span className="mv-mission__label">Misi</span>
+            <div className="mv-timeline">
+              {misi.map((m, i) => (
+                <div className="mv-timeline__item" key={m}>
+                  <span className="mv-timeline__node">{i + 1}</span>
+                  <span className="mv-timeline__ghost" aria-hidden="true">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <p>{m}</p>
+                </div>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
 

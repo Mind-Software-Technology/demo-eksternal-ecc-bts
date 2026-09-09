@@ -36,6 +36,41 @@
   color: #fff;
 }
 
+/* ------------------------------------------------- produk two-column layout */
+/* Mobile-first: sidebar stacks above the product grid, filter pills stay a
+   horizontal row. From 860px up, the sidebar becomes a left-hand column of
+   stacked category buttons with the grid to its right. */
+.produk-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+.produk-sidebar__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink);
+  margin-bottom: 0.9rem;
+}
+.produk-main {
+  min-width: 0;
+}
+@media (min-width: 860px) {
+  .produk-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 2.2rem;
+  }
+  .produk-sidebar {
+    flex: 0 0 220px;
+    position: sticky;
+    top: 6rem;
+  }
+  .produk-main {
+    flex: 1;
+  }
+}
+
 /* --------------------------------------------------------- filter tabs */
 .filter-tabs {
   display: flex;
@@ -65,6 +100,21 @@
   .filter-tab {
     flex: 0 0 auto;
     scroll-snap-align: start;
+  }
+}
+/* Desktop sidebar: pills become a stacked, left-aligned list instead of a
+   centered wrapping row. */
+@media (min-width: 860px) {
+  .produk-sidebar .filter-tabs {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.4rem;
+    margin-bottom: 0;
+  }
+  .produk-sidebar .filter-tab {
+    text-align: left;
+    border-radius: var(--r-md);
   }
 }
 .filter-tab {
@@ -122,6 +172,7 @@
 }
 .category-card {
   position: relative;
+  display: block;
   border-radius: var(--r-lg);
   background: #fff;
   border: 1px solid var(--line);
@@ -158,33 +209,6 @@
 }
 .category-card > p {
   margin-top: 0.9rem;
-}
-.category-card__list {
-  margin-top: 1.2rem;
-  display: grid;
-  gap: 0.6rem;
-}
-.category-card__list a {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.8rem 1rem;
-  border-radius: var(--r-md);
-  background: var(--soft);
-  font-weight: 600;
-  font-size: 0.94rem;
-  color: var(--ink);
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-.category-card__list a:hover {
-  background: var(--soft-2);
-  transform: translateX(4px);
-  color: var(--blue-600);
-}
-.category-card__list svg {
-  color: var(--blue-500);
-  flex: none;
 }
 
 /* ------------------------------------------------------------- events */
@@ -466,50 +490,170 @@
   font-size: 0.85rem;
   color: var(--ondark-muted);
 }
-.mv-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-top: 2.6rem;
+/* Visi: one big typographic statement, no card/border — sits directly on
+   the dark section like a pull-quote. */
+.mv-vision {
+  max-width: 780px;
+  margin: 2.8rem auto 0;
+  text-align: center;
 }
-.mv-card {
-  border-radius: var(--r-lg);
-  padding: 2rem;
-  background: #fff;
-  color: var(--ink-soft);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-sm);
+.mv-vision__label {
+  display: inline-block;
   position: relative;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--secondary-light);
+  padding-bottom: 0.7rem;
+  margin-bottom: 1.3rem;
 }
-.mv-card h3 {
-  color: var(--ink);
+.mv-vision__label::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 34px;
+  height: 2px;
+  background: var(--secondary-light);
+  border-radius: 999px;
 }
-/* on a dark/primary section the navy drop-shadow disappears into the
-   background, so swap it for a soft blue glow that actually reads */
-.section--dark .mv-card {
-  border-color: transparent;
-  box-shadow: 0 20px 50px -18px rgba(5, 10, 30, 0.55), var(--shadow-glow);
+.mv-vision__text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.3rem, 1.05rem + 1vw, 1.7rem);
+  line-height: 1.55;
+  color: #fff;
 }
-.mv-card__ic {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--r-md);
+
+/* Misi: a vertical timeline — center line + node like "Cara Kerja", but
+   vertical instead of horizontal, with steps alternating left/right of the
+   line instead of all sitting under their node. */
+.mv-mission {
+  margin-top: 3.6rem;
+  text-align: center;
+}
+.mv-mission__label {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: #fff;
+  margin-bottom: 2.4rem;
+}
+.mv-timeline {
+  position: relative;
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: left;
+}
+.mv-timeline::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.mv-timeline__item {
+  position: relative;
+  width: 50%;
+  padding: 0 2.6rem;
+}
+.mv-timeline__item:not(:last-child) {
+  margin-bottom: 2.4rem;
+}
+.mv-timeline__item:nth-child(odd) {
+  left: 0;
+  text-align: right;
+}
+.mv-timeline__item:nth-child(even) {
+  left: 50%;
+  text-align: left;
+}
+.mv-timeline__node {
+  position: absolute;
+  top: 0;
+  z-index: 1;
   display: grid;
   place-items: center;
-  font-size: 1.5rem;
-  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   background: var(--g-accent);
-  margin-bottom: 1rem;
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  box-shadow: 0 10px 22px -10px rgba(255, 140, 51, 0.6);
 }
-.mv-card--vision .mv-card__ic {
-  background: var(--g-brand);
+.mv-timeline__item:nth-child(odd) .mv-timeline__node {
+  right: -18px;
 }
-.mv-card__list {
-  margin-top: 0.6rem;
-  padding-left: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.mv-timeline__item:nth-child(even) .mv-timeline__node {
+  left: -18px;
+}
+.mv-timeline__item p {
+  position: relative;
+  z-index: 1;
+  font-size: 0.92rem;
+  color: var(--ondark-body);
+  line-height: 1.55;
+}
+/* Each row only fills one side of the line, leaving the other half blank —
+   mirror a large translucent numeral onto that empty side instead of
+   leaving it dead space. Percentage offsets on an absolutely positioned
+   element resolve against its own containing block (this item, 50% of
+   .mv-timeline wide), so ±100% lands it exactly one item-width across the
+   center line, in the half this row doesn't otherwise use. */
+.mv-timeline__ghost {
+  position: absolute;
+  top: 50%;
+  z-index: 0;
+  transform: translateY(-50%);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 4.5rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.mv-timeline__item:nth-child(odd) .mv-timeline__ghost {
+  right: -100%;
+  text-align: left;
+  padding-left: 2.6rem;
+}
+.mv-timeline__item:nth-child(even) .mv-timeline__ghost {
+  left: -100%;
+  text-align: right;
+  padding-right: 2.6rem;
+}
+@media (max-width: 640px) {
+  .mv-timeline::before {
+    left: 18px;
+  }
+  .mv-timeline__item,
+  .mv-timeline__item:nth-child(even) {
+    width: 100%;
+    left: 0;
+    text-align: left;
+    padding: 0 0 0 3rem;
+  }
+  .mv-timeline__item:nth-child(odd) .mv-timeline__node,
+  .mv-timeline__item:nth-child(even) .mv-timeline__node {
+    left: 0;
+    right: auto;
+  }
+  /* No opposite side to mirror into once the timeline collapses to one
+     column. */
+  .mv-timeline__ghost {
+    display: none;
+  }
 }
 .values-grid {
   display: grid;
@@ -541,6 +685,10 @@
 }
 
 /* ------------------------------------------------------------ contact */
+.contact-section {
+  position: relative;
+  overflow: hidden;
+}
 .contact-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -548,11 +696,20 @@
   align-items: start;
 }
 .form-card {
+  position: relative;
+  overflow: hidden;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   padding: clamp(1.5rem, 1rem + 2vw, 2.4rem);
   box-shadow: var(--shadow-card);
+}
+.form-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: var(--g-accent);
 }
 .field {
   margin-bottom: 1.1rem;
@@ -614,6 +771,43 @@
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
+.upload-item {
+  padding: 1.1rem 1.2rem;
+  margin-bottom: 1rem;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.upload-item__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+.upload-item__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+.upload-item__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--r-pill);
+  background: var(--soft);
+  color: var(--muted);
+}
+.upload-item__badge--done {
+  background: rgba(34, 168, 73, 0.12);
+  color: var(--green-dark);
+}
+
 .file-preview {
   display: flex;
   align-items: center;
@@ -792,24 +986,36 @@
   text-decoration: none;
 }
 
+/* One dark panel holding every contact tile + the map, set against the
+   light form column beside it — deliberate contrast instead of matching
+   white cards on both sides. */
 .contact-tiles {
   display: grid;
   gap: 1rem;
+  padding: 1.6rem;
+  border-radius: var(--r-lg);
+  background: var(--gradient-primary);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
 }
 .contact-tile {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 1.2rem 1.3rem;
-  border-radius: var(--r-lg);
-  background: #fff;
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-card);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, border-color 0.3s ease;
 }
 .contact-tile:hover {
   transform: translateY(-4px);
-  box-shadow: 0 34px 70px -26px rgba(21, 33, 73, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 20px 50px -18px rgba(5, 10, 30, 0.55), var(--shadow-glow);
 }
 .contact-tile__ic {
   width: 50px;
@@ -825,41 +1031,83 @@
 .contact-tile--wa .contact-tile__ic {
   background: linear-gradient(135deg, var(--green), var(--green-400));
 }
+.contact-tile--phone .contact-tile__ic {
+  background: var(--g-brand);
+}
+.contact-tile--email .contact-tile__ic {
+  background: linear-gradient(135deg, var(--indigo), var(--blue-500));
+}
+.contact-tile--address .contact-tile__ic {
+  background: var(--g-accent);
+}
+.contact-tile--hours .contact-tile__ic {
+  background: linear-gradient(135deg, var(--cyan), var(--blue-400));
+}
 /* Label text only — scoped to the text column so it doesn't override the
    icon badge's own color/size (.contact-tile__ic is a direct-child span). */
 .contact-tile div span {
   font-size: 0.82rem;
-  color: var(--muted);
+  color: var(--ondark-muted);
   display: block;
 }
 .contact-tile b {
   font-family: var(--font-display);
   font-size: 1.02rem;
+  color: #fff;
 }
 .map-embed {
-  margin-top: 1rem;
-  border-radius: var(--r-lg);
+  position: relative;
+  z-index: 1;
+  margin-top: 0.4rem;
+  border-radius: var(--r-md);
   overflow: hidden;
-  border: 1px solid var(--line);
-  background: var(--soft-2);
-  height: 200px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  height: 240px;
+  box-shadow: 0 20px 50px -18px rgba(5, 10, 30, 0.55);
+}
+.map-embed__empty {
+  height: 100%;
   display: grid;
   place-items: center;
   text-align: center;
-  color: var(--muted);
-  position: relative;
+  color: var(--ondark-muted);
 }
-.map-embed svg {
+.map-embed__empty svg {
   font-size: 2rem;
   color: var(--blue-500);
   margin-bottom: 0.4rem;
 }
 .map-embed iframe {
-  place-self: stretch;
   width: 100%;
   height: 100%;
   border: 0;
   display: block;
+}
+.map-embed__link {
+  position: absolute;
+  left: 0.7rem;
+  bottom: 0.7rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--r-pill);
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.map-embed__link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -14px rgba(21, 33, 73, 0.4);
+}
+.map-embed__link svg {
+  color: var(--secondary);
 }
 
 /* --------------------------------------------------------------- faq */
@@ -914,7 +1162,6 @@
     grid-template-columns: 1fr;
   }
   .grid-categories,
-  .mv-grid,
   .values-grid {
     grid-template-columns: 1fr;
   }
@@ -966,7 +1213,7 @@
 .grid-products {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.6rem;
+  gap: 1.25rem;
 }
 .product-card__wrap {
   display: flex;
@@ -979,7 +1226,7 @@
   width: 100%;
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   overflow: hidden;
   box-shadow: var(--shadow-card);
   transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
@@ -992,7 +1239,7 @@
 .product-card__media {
   position: relative;
   display: block;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   background: var(--accent, var(--g-brand));
   overflow: hidden;
 }
@@ -1037,11 +1284,11 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 1.3rem 1.4rem 1.4rem;
+  padding: 1.1rem 1.2rem 1.2rem;
 }
 .product-card__body h3 {
-  margin-top: 0.35rem;
-  font-size: 1.18rem;
+  margin-top: 0.3rem;
+  font-size: 1.05rem;
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;

@@ -1,16 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { FiSearch } from 'react-icons/fi'
 import { formatCount } from '../../data/format'
-import { api } from '../../lib/api'
 import { useSiteConfig } from '../../hooks/useSiteConfig'
 import { useCategories } from '../../hooks/useCategories'
 import { getHero } from '../../data/site'
-import EventCoverflow from './EventCoverflow'
+import HeroEventCard from './HeroEventCard'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 26 },
@@ -21,17 +20,9 @@ const fadeUp = {
   }),
 }
 
-const FALLBACK_SLIDE = {
-  src: '/images/publikasi-artikel-ilmiah.jpg',
-  alt: 'Naskah karya ilmiah yang sedang dikerjakan tim ECC',
-}
-const SLIDE_INTERVAL_MS = 4500
-
 export default function Hero() {
   const [q, setQ] = useState('')
   const categories = useCategories()
-  const [eventSlides, setEventSlides] = useState([])
-  const [slideIndex, setSlideIndex] = useState(0)
   const router = useRouter()
   const config = useSiteConfig()
 
@@ -40,39 +31,6 @@ export default function Hero() {
   // Belum termuat -> tampilkan "—", bukan 0. Angka nol sekejap lalu melompat
   // ke angka asli terbaca seperti datanya salah.
   const stats = config?.stats
-
-  useEffect(() => {
-    api.events
-      .list()
-      .then((items) => {
-        const withFlyer = items
-          .filter((e) => e.flyer_url)
-          .map((e) => ({
-            src: e.flyer_url,
-            alt: e.title,
-            title: e.title,
-          }))
-        setEventSlides(withFlyer)
-      })
-      .catch(() => {})
-  }, [])
-
-  const slides = eventSlides.length > 0 ? eventSlides : [FALLBACK_SLIDE]
-
-  // Auto-advance stays on; restarting the timer on `slideIndex` means a manual
-  // pick (below) also gets a full interval before the next auto-advance,
-  // instead of being cut short by whatever was already in flight.
-  useEffect(() => {
-    if (slides.length < 2) return undefined
-    const id = setInterval(() => {
-      setSlideIndex((i) => (i + 1) % slides.length)
-    }, SLIDE_INTERVAL_MS)
-    return () => clearInterval(id)
-  }, [slides.length, slideIndex])
-
-  const goToSlide = (i) => setSlideIndex(((i % slides.length) + slides.length) % slides.length)
-  const goToPrevSlide = () => goToSlide(slideIndex - 1)
-  const goToNextSlide = () => goToSlide(slideIndex + 1)
 
   const onSearch = (e) => {
     e.preventDefault()
@@ -121,28 +79,13 @@ export default function Hero() {
             {hero.subtitle}
           </motion.p>
 
-          <motion.div
-            className="hero__chips"
-            variants={fadeUp}
-            initial="hidden"
-            animate="show"
-            custom={3}
-          >
-            <span className="hero__chips-label">Populer:</span>
-            {categories.map((c) => (
-              <Link key={c.slug} href={`/produk?cat=${c.slug}`} className="hero__chip">
-                {c.title}
-              </Link>
-            ))}
-          </motion.div>
-
           <motion.form
-            className="hero__search hero__search--wide"
+            className="hero__search hero__search--ghost"
             onSubmit={onSearch}
             variants={fadeUp}
             initial="hidden"
             animate="show"
-            custom={4}
+            custom={3}
           >
             <FiSearch className="hero__search-ic" aria-hidden="true" />
             <input
@@ -156,6 +99,21 @@ export default function Hero() {
               Cari
             </button>
           </motion.form>
+
+          <motion.div
+            className="hero__chips hero__chips--ghost"
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
+            custom={4}
+          >
+            <span className="hero__chips-label">Populer:</span>
+            {categories.map((c) => (
+              <Link key={c.slug} href={`/produk?cat=${c.slug}`} className="hero__chip">
+                {c.title}
+              </Link>
+            ))}
+          </motion.div>
 
           <motion.div
             className="hero__trust"
@@ -186,13 +144,7 @@ export default function Hero() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
         >
-          <EventCoverflow
-            slides={slides}
-            index={slideIndex}
-            onPrev={goToPrevSlide}
-            onNext={goToNextSlide}
-            onSelect={goToSlide}
-          />
+          <HeroEventCard />
         </motion.div>
         </div>
       </div>
