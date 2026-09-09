@@ -191,8 +191,18 @@ export default function Contact() {
         subtitle="Punya pertanyaan atau ingin memesan layanan? Tim kami siap membantu Anda."
       />
 
-      <section className="section">
-        <div className="container contact-grid">
+      <section className="section contact-section">
+        <span
+          className="blob"
+          aria-hidden="true"
+          style={{ background: 'var(--blue-400)', width: 260, height: 260, top: -90, left: -70, opacity: 0.12 }}
+        />
+        <span
+          className="blob"
+          aria-hidden="true"
+          style={{ background: 'var(--secondary)', width: 240, height: 240, bottom: -100, right: -60, opacity: 0.1 }}
+        />
+        <div className="container contact-grid" style={{ position: 'relative', zIndex: 1 }}>
           <Reveal>
             <SectionHeading
               center={false}
@@ -221,7 +231,7 @@ export default function Contact() {
                   <b>{phoneDisplay}</b>
                 </div>
               </a>
-              <a href={`tel:${phoneDisplay}`} className="contact-tile">
+              <a href={`tel:${phoneDisplay}`} className="contact-tile contact-tile--phone">
                 <span className="contact-tile__ic">
                   <FiPhone />
                 </span>
@@ -230,7 +240,7 @@ export default function Contact() {
                   <b>{phoneDisplay}</b>
                 </div>
               </a>
-              <a href={`mailto:${email}`} className="contact-tile">
+              <a href={`mailto:${email}`} className="contact-tile contact-tile--email">
                 <span className="contact-tile__ic">
                   <FiMail />
                 </span>
@@ -239,7 +249,7 @@ export default function Contact() {
                   <b>{email}</b>
                 </div>
               </a>
-              <div className="contact-tile">
+              <div className="contact-tile contact-tile--address">
                 <span className="contact-tile__ic">
                   <FiMapPin />
                 </span>
@@ -248,7 +258,7 @@ export default function Contact() {
                   <b>{address}</b>
                 </div>
               </div>
-              <div className="contact-tile">
+              <div className="contact-tile contact-tile--hours">
                 <span className="contact-tile__ic">
                   <FiClock />
                 </span>
@@ -260,15 +270,27 @@ export default function Contact() {
 
               <div className="map-embed">
                 {mapsUrl ? (
-                  <iframe
-                    src={mapsUrl}
-                    title={`Peta lokasi ${address}`}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    allowFullScreen
-                  />
+                  <>
+                    <iframe
+                      src={mapsUrl}
+                      title={`Peta lokasi ${address}`}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      allowFullScreen
+                    />
+                    {address && (
+                      <a
+                        className="map-embed__link"
+                        href={`https://www.google.com/maps?q=${encodeURIComponent(address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <FiMapPin /> Buka di Google Maps
+                      </a>
+                    )}
+                  </>
                 ) : (
-                  <div>
+                  <div className="map-embed__empty">
                     <FiMapPin />
                     <div>Peta lokasi (demo)</div>
                   </div>

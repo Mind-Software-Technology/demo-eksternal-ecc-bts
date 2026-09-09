@@ -1,27 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { FiArrowRight } from 'react-icons/fi'
 import Page from '../../../components/layout/Page'
 import PageHero from '../../../components/sections/PageHero'
 import CTABand from '../../../components/sections/CTABand'
 import { RevealGroup, RevealItem } from '../../../components/ui/Reveal'
 import { Icon } from '../../../data/icons'
 import { useCategories } from '../../../hooks/useCategories'
-import { api } from '../../../lib/api'
+import { useServices } from '../../../hooks/useServices'
 
 export default function Categories() {
   const categories = useCategories()
-  const [services, setServices] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    api.services
-      .list({ limit: 100 })
-      .then(({ items }) => setServices(items))
-      .finally(() => setLoading(false))
-  }, [])
+  const { items: services, loading } = useServices({ limit: 100 })
 
   return (
     <Page title="Kategori Layanan — ECC-BTS">
@@ -38,29 +28,21 @@ export default function Categories() {
           ) : (
             <RevealGroup className="grid-categories">
               {categories.map((c) => {
-                const inCategory = services.filter((s) => s.category?.slug === c.slug)
+                const count = services.filter((s) => s.category?.slug === c.slug).length
                 return (
-                  <RevealItem className="category-card" key={c.slug}>
-                    <div className="category-card__top">
-                      <span className="category-card__ic">
-                        <Icon name={c.icon} />
-                      </span>
-                      <div>
-                        <h3>{c.title}</h3>
-                        <span className="category-card__count">
-                          {inCategory.length} layanan
+                  <RevealItem key={c.slug}>
+                    <Link href={`/produk?cat=${c.slug}`} className="category-card">
+                      <div className="category-card__top">
+                        <span className="category-card__ic">
+                          <Icon name={c.icon} />
                         </span>
+                        <div>
+                          <h3>{c.title}</h3>
+                          <span className="category-card__count">{count} layanan</span>
+                        </div>
                       </div>
-                    </div>
-                    <p>{c.short_desc}</p>
-                    <div className="category-card__list">
-                      {inCategory.map((s) => (
-                        <Link href={`/produk?cat=${c.slug}`} key={s.id}>
-                          {s.title.replace('Jasa ', '')}
-                          <FiArrowRight />
-                        </Link>
-                      ))}
-                    </div>
+                      <p>{c.short_desc}</p>
+                    </Link>
                   </RevealItem>
                 )
               })}

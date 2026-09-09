@@ -148,8 +148,7 @@ function KonsultasiInner() {
             href={waLink(waMessage)}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn--block btn--lg"
-            style={{ background: '#25D366', color: '#fff' }}
+            className="btn btn--wa btn--block btn--lg"
             onClick={markConsulted}
           >
             <FaWhatsapp /> Konsultasi via WhatsApp

@@ -172,16 +172,21 @@ function UploadInner() {
             const isUploading = uploadingId === it.id
 
             return (
-              <div className="field" key={it.id}>
-                <label htmlFor={`file-${it.id}`}>
-                  {it.title_snapshot}
-                  {!it.requires_attachment && ' (opsional)'}
-                  {it.has_attachment && !file && (
-                    <span style={{ color: 'var(--color-success, #16a34a)', marginLeft: 8 }}>
+              <div className="upload-item" key={it.id}>
+                <div className="upload-item__head">
+                  <label htmlFor={`file-${it.id}`} className="upload-item__title">
+                    {it.title_snapshot}
+                  </label>
+                  {it.has_attachment && !file ? (
+                    <span className="upload-item__badge upload-item__badge--done">
                       <FiCheckCircle /> Sudah diunggah
                     </span>
+                  ) : (
+                    !it.requires_attachment && (
+                      <span className="upload-item__badge">Opsional</span>
+                    )
                   )}
-                </label>
+                </div>
 
                 {!file && (
                   <input

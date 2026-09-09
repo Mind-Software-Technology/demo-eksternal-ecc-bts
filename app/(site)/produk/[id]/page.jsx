@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { FiCheck, FiShoppingCart, FiArrowLeft, FiTag } from 'react-icons/fi'
@@ -11,33 +11,14 @@ import Reveal from '../../../../components/ui/Reveal'
 import Rating from '../../../../components/ui/Rating'
 import { useCart } from '../../../../context/cart'
 import { useAuth, loginUrl } from '../../../../context/auth'
-import { api } from '../../../../lib/api'
+import { useService } from '../../../../hooks/useServices'
 
 export default function ProductDetail() {
   const { id: slug } = useParams()
   const router = useRouter()
   const { addItem } = useCart()
   const { user } = useAuth()
-  const [service, setService] = useState(null)
-  const [notFound, setNotFound] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets state before refetching on slug change
-    setService(null)
-    setNotFound(false)
-    api.services
-      .show(slug)
-      .then((data) => {
-        if (!cancelled) setService(data)
-      })
-      .catch(() => {
-        if (!cancelled) setNotFound(true)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [slug])
+  const { service, notFound } = useService(slug)
 
   // Unknown product slug → back to the listing.
   useEffect(() => {

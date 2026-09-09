@@ -1,6 +1,6 @@
 'use client'
 
-import { Children } from 'react'
+import { Children, forwardRef } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 
 /**
@@ -44,7 +44,10 @@ export default function Reveal({
 }
 
 /** Container that staggers its <Reveal> / motion children. */
-export function RevealGroup({ children, className, stagger = 0.1, ...rest }) {
+export const RevealGroup = forwardRef(function RevealGroup(
+  { children, className, stagger = 0.1, ...rest },
+  ref
+) {
   const reduce = useReducedMotion()
 
   // Sebagian besar grid di situs ini diisi dari API, jadi hidup dalam keadaan
@@ -55,13 +58,14 @@ export function RevealGroup({ children, className, stagger = 0.1, ...rest }) {
   // opacity-nya 0. Selama masih kosong, jangan pasang pengamatnya dulu.
   if (reduce || Children.count(children) === 0) {
     return (
-      <div className={className} {...rest}>
+      <div ref={ref} className={className} {...rest}>
         {children}
       </div>
     )
   }
   return (
     <motion.div
+      ref={ref}
       className={className}
       initial="hidden"
       whileInView="show"
@@ -75,7 +79,7 @@ export function RevealGroup({ children, className, stagger = 0.1, ...rest }) {
       {children}
     </motion.div>
   )
-}
+})
 
 /** Child item for use inside <RevealGroup>. */
 export function RevealItem({ children, className, y = 26, ...rest }) {

@@ -1,7 +1,12 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { api } from '../../lib/api'
+import ServiceCard from '../ui/ServiceCard'
+
+const SLIDE_INTERVAL_MS = 5000
 
 /** Shortest signed distance from `index` to `active`, wrapping around `length`. */
 function wrappedOffset(index, active, length) {
@@ -25,18 +30,66 @@ function slideStyle(offset) {
   }
 }
 
-/**
- * 3D coverflow: satu gambar tengah besar & jelas, gambar di kiri-kanannya
- * mengecil dan meredup mengikuti jaraknya dari tengah (efek depth), sedikit
- * terpotong di tepi panel gelap. `slides[i]` butuh { src, alt, title }.
- */
-export default function EventCoverflow({ slides, index, onPrev, onNext, onSelect }) {
-  const activeTitle = slides[index]?.title
+/** Hero visual: 3D coverflow of event flyers (landscape), auto-advancing
+ * every 5s. Falls back to featured services when there's no kegiatan to show. */
+export default function HeroEventCard() {
+  const [slides, setSlides] = useState([])
+  const [loaded, setLoaded] = useState(false)
+  const [index, setIndex] = useState(0)
+  const [fallbackServices, setFallbackServices] = useState([])
+
+  useEffect(() => {
+    api.events
+      .list()
+      .then((items) => {
+        const withFlyer = items
+          .filter((e) => e.flyer_url)
+          .map((e) => ({ src: e.flyer_url, alt: e.title, title: e.title }))
+        setSlides(withFlyer)
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true))
+  }, [])
+
+  useEffect(() => {
+    if (!loaded || slides.length > 0) return
+    api.services
+      .list({ limit: 2 })
+      .then(({ items }) => setFallbackServices(items))
+      .catch(() => {})
+  }, [loaded, slides.length])
+
+  // Auto-advance stays on; restarting the timer on `index` means a manual
+  // pick (below) also gets a full interval before the next auto-advance,
+  // instead of being cut short by whatever was already in flight.
+  useEffect(() => {
+    if (slides.length < 2) return undefined
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % slides.length)
+    }, SLIDE_INTERVAL_MS)
+    return () => clearInterval(id)
+  }, [slides.length, index])
+
+  if (loaded && slides.length === 0) {
+    if (fallbackServices.length === 0) return null
+
+    return (
+      <div className="hero-event-card__fallback">
+        {fallbackServices.map((s) => (
+          <ServiceCard key={s.id} service={s} />
+        ))}
+      </div>
+    )
+  }
+
+  if (slides.length === 0) return null
+
+  const goToSlide = (i) => setIndex(((i % slides.length) + slides.length) % slides.length)
+  const goToPrev = () => goToSlide(index - 1)
+  const goToNext = () => goToSlide(index + 1)
 
   return (
     <div className="event-coverflow">
-      {activeTitle && <div className="event-coverflow__label">{activeTitle}</div>}
-
       <div className="event-coverflow__track">
         {slides.map((slide, i) => {
           const offset = wrappedOffset(i, index, slides.length)
@@ -52,10 +105,8 @@ export default function EventCoverflow({ slides, index, onPrev, onNext, onSelect
               style={slideStyle(offset)}
             >
               <img src={slide.src} alt={slide.alt || ''} loading="lazy" />
-              <span className="event-coverflow__badge">
-                <img src="/images/logo.png" alt="" aria-hidden="true" />
-                Kegiatan ECC
-              </span>
+              {slide.title && <span className="event-coverflow__title">{slide.title}</span>}
+              <span className="event-coverflow__badge">Kegiatan ECC</span>
             </Link>
           )
         })}
@@ -67,7 +118,7 @@ export default function EventCoverflow({ slides, index, onPrev, onNext, onSelect
             type="button"
             className="event-coverflow__nav event-coverflow__nav--prev"
             aria-label="Kegiatan sebelumnya"
-            onClick={onPrev}
+            onClick={goToPrev}
           >
             <FiChevronLeft />
           </button>
@@ -75,7 +126,7 @@ export default function EventCoverflow({ slides, index, onPrev, onNext, onSelect
             type="button"
             className="event-coverflow__nav event-coverflow__nav--next"
             aria-label="Kegiatan berikutnya"
-            onClick={onNext}
+            onClick={goToNext}
           >
             <FiChevronRight />
           </button>
@@ -88,7 +139,7 @@ export default function EventCoverflow({ slides, index, onPrev, onNext, onSelect
                 className={i === index ? 'is-active' : ''}
                 aria-label={`Tampilkan kegiatan ${i + 1}`}
                 aria-current={i === index}
-                onClick={() => onSelect(i)}
+                onClick={() => goToSlide(i)}
               />
             ))}
           </div>
