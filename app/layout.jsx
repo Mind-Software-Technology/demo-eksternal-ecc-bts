@@ -22,7 +22,7 @@ export const metadata = {
     canonical: '/',
   },
   icons: {
-    icon: '/favicon.svg',
+    icon: '/images/logo.png',
   },
   openGraph: {
     type: 'website',
