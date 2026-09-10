@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { FiCheck, FiShoppingCart, FiArrowLeft, FiTag } from 'react-icons/fi'
@@ -19,6 +19,9 @@ export default function ProductDetail() {
   const { addItem } = useCart()
   const { user } = useAuth()
   const { service, notFound } = useService(slug)
+  // Which of the two actions (if any) is mid-request, so only that button
+  // shows a busy state instead of the whole page looking unresponsive.
+  const [busyAction, setBusyAction] = useState(null)
 
   // Unknown product slug → back to the listing.
   useEffect(() => {
@@ -27,20 +30,24 @@ export default function ProductDetail() {
 
   if (!service) return null
 
-  const addToCart = () => {
+  const addToCart = async () => {
     if (!user) {
       router.push(loginUrl(`/produk/${slug}`))
       return
     }
-    addItem(service.id)
+    setBusyAction('cart')
+    await addItem(service.id)
+    setBusyAction(null)
   }
 
-  const orderNow = () => {
+  const orderNow = async () => {
     if (!user) {
       router.push(loginUrl(`/produk/${slug}`))
       return
     }
-    addItem(service.id)
+    setBusyAction('order')
+    await addItem(service.id)
+    setBusyAction(null)
     router.push('/keranjang')
   }
 
@@ -94,15 +101,17 @@ export default function ProductDetail() {
                 type="button"
                 className="btn btn--primary btn--lg"
                 onClick={orderNow}
+                disabled={busyAction !== null}
               >
-                Pesan Sekarang
+                {busyAction === 'order' ? 'Memproses…' : 'Pesan Sekarang'}
               </button>
               <button
                 type="button"
                 className="btn btn--outline btn--lg"
                 onClick={addToCart}
+                disabled={busyAction !== null}
               >
-                <FiShoppingCart /> Tambahkan ke Keranjang
+                <FiShoppingCart /> {busyAction === 'cart' ? 'Menambahkan…' : 'Tambahkan ke Keranjang'}
               </button>
             </div>
 

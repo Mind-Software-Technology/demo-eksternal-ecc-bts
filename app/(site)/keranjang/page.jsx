@@ -55,7 +55,11 @@ export default function Cart() {
       <PageHero
         title="Keranjang Belanja"
         crumb="Keranjang"
-        subtitle="Tinjau layanan yang Anda pilih sebelum memesan."
+        subtitle={
+          detailed.length === 0
+            ? 'Keranjang Anda masih kosong — jelajahi layanan kami dan mulai pesan.'
+            : 'Tinjau layanan yang Anda pilih sebelum memesan.'
+        }
       />
 
       <section className="section">
@@ -65,9 +69,14 @@ export default function Cart() {
               <FiShoppingCart className="cart-empty__ic" />
               <h2>Keranjang Anda masih kosong</h2>
               <p>Jelajahi layanan kami dan tambahkan ke keranjang.</p>
-              <Link href="/produk" className="btn btn--primary btn--lg">
-                Mulai Belanja <FiArrowRight />
-              </Link>
+              <div className="cart-empty__actions">
+                <Link href="/produk" className="btn btn--primary btn--lg">
+                  Mulai Belanja <FiArrowRight />
+                </Link>
+                <Link href="/kategori" className="cart-empty__secondary">
+                  Lihat semua kategori
+                </Link>
+              </div>
             </Reveal>
           ) : (
             <div className="cart-grid">
