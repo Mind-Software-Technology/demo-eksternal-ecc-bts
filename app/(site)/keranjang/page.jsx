@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { FiTrash2, FiShoppingCart, FiArrowRight } from 'react-icons/fi'
+import { FiTrash2, FiShoppingCart, FiArrowRight, FiPlus, FiMinus } from 'react-icons/fi'
 import Page from '../../../components/layout/Page'
 import PageHero from '../../../components/sections/PageHero'
 import Reveal from '../../../components/ui/Reveal'
@@ -12,7 +12,7 @@ import { useAuth, loginUrl } from '../../../context/auth'
 import { setSelectedCartItemIds } from '../../../lib/checkoutSelectionCache'
 
 export default function Cart() {
-  const { detailed, removeItem } = useCart()
+  const { detailed, removeItem, setQty } = useCart()
   const { user, ready: authReady } = useAuth()
   const router = useRouter()
 
@@ -20,6 +20,11 @@ export default function Cart() {
   // (never seen before) defaults to selected without needing an effect to
   // seed it — it's just absent from this set.
   const [deselected, setDeselected] = useState(() => new Set())
+  // Cart item ids with an in-flight qty request — the +/- buttons disable
+  // themselves while pending so rapid clicks can't race: without this, a
+  // second click firing before the first PATCH resolves would read the same
+  // stale `qty` and net only +1 instead of +2.
+  const [qtyPending, setQtyPending] = useState(() => new Set())
 
   // Cart is account-only — bounce a logged-out visitor to login.
   useEffect(() => {
@@ -27,6 +32,19 @@ export default function Cart() {
   }, [authReady, user, router])
 
   if (!authReady || !user) return null
+
+  const changeQty = async (cartItemId, qty) => {
+    setQtyPending((prev) => new Set(prev).add(cartItemId))
+    try {
+      await setQty(cartItemId, qty)
+    } finally {
+      setQtyPending((prev) => {
+        const next = new Set(prev)
+        next.delete(cartItemId)
+        return next
+      })
+    }
+  }
 
   const toggleItem = (cartItemId) => {
     setDeselected((prev) => {
@@ -123,8 +141,24 @@ export default function Cart() {
                         <span className="cart-item__tag">{it.tagline}</span>
                       </div>
                       <div className="cart-item__controls">
-                        <div className="qty-stepper qty-stepper--readonly" aria-label="Jumlah">
+                        <div className="qty-stepper" aria-label="Jumlah">
+                          <button
+                            type="button"
+                            aria-label={`Kurangi jumlah ${it.title}`}
+                            disabled={it.qty <= 1 || qtyPending.has(it.cartItemId)}
+                            onClick={() => changeQty(it.cartItemId, it.qty - 1)}
+                          >
+                            <FiMinus />
+                          </button>
                           <span>{it.qty}</span>
+                          <button
+                            type="button"
+                            aria-label={`Tambah jumlah ${it.title}`}
+                            disabled={qtyPending.has(it.cartItemId)}
+                            onClick={() => changeQty(it.cartItemId, it.qty + 1)}
+                          >
+                            <FiPlus />
+                          </button>
                         </div>
                         <button
                           type="button"

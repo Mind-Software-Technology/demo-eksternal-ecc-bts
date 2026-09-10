@@ -177,6 +177,19 @@ p {
   margin-inline: auto;
   padding-inline: clamp(2.5rem, 1.5rem + 6vw, 6rem);
 }
+/* The clamp above is tuned for tablet-and-up — its 6vw term alone eats ~46px
+   per side on a 390px phone (>23% of the screen), squeezing every page's
+   content into a cramped column. Give small screens a flat, much smaller gutter. */
+@media (max-width: 640px) {
+  .container {
+    padding-inline: 1.1rem;
+  }
+}
+@media (min-width: 641px) and (max-width: 900px) {
+  .container {
+    padding-inline: 1.75rem;
+  }
+}
 .section {
   padding-block: clamp(3.5rem, 2rem + 6vw, 6.5rem);
 }
