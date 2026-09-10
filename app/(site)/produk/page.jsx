@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FiShoppingCart, FiX } from 'react-icons/fi'
@@ -19,13 +19,18 @@ function ProductsContent() {
   const router = useRouter()
   const { addItem } = useCart()
   const { user } = useAuth()
+  // Which service is mid-request right now — lets just that one card's
+  // button show "Menambahkan…" instead of the whole grid looking inert.
+  const [addingId, setAddingId] = useState(null)
 
-  const addToCart = (serviceId) => {
+  const addToCart = async (serviceId) => {
     if (!user) {
       router.push(loginUrl('/produk'))
       return
     }
-    addItem(serviceId)
+    setAddingId(serviceId)
+    await addItem(serviceId)
+    setAddingId(null)
   }
 
   const active = params.get('cat') || 'all'
@@ -157,8 +162,9 @@ function ProductsContent() {
                                 className="btn btn--blue btn--sm"
                                 aria-label={`Tambah ${s.title} ke keranjang`}
                                 onClick={() => addToCart(s.id)}
+                                disabled={addingId === s.id}
                               >
-                                <FiShoppingCart /> Keranjang
+                                <FiShoppingCart /> {addingId === s.id ? 'Menambahkan…' : 'Keranjang'}
                               </button>
                             </div>
                           </div>

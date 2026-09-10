@@ -619,7 +619,7 @@ function PaymentInner() {
                       <input
                         id="proof-file"
                         type="file"
-                        accept=".jpg,.jpeg,.png,.pdf"
+                        accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf"
                         disabled={proofUploading}
                         onChange={(e) => selectProof(e.target.files?.[0] || null)}
                       />

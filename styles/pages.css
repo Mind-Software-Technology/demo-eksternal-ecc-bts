@@ -1535,6 +1535,14 @@
 .qty-stepper button:hover {
   background: var(--blue-100);
 }
+.qty-stepper button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.qty-stepper button:disabled:hover {
+  background: #fff;
+}
 .qty-stepper span {
   min-width: 34px;
   text-align: center;
@@ -1616,14 +1624,15 @@
   padding: clamp(2.2rem, 1.7rem + 2vw, 3.2rem) clamp(1.4rem, 1rem + 2vw, 2.2rem);
 }
 .cart-empty__ic {
-  display: block;
-  width: 34px;
-  height: 34px;
-  padding: 22px;
-  margin: 0 auto 1.25rem;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 1.4rem;
   border-radius: 50%;
   background: var(--blue-100);
   color: var(--blue-600);
+  font-size: 2rem;
 }
 .cart-empty__ic--ok {
   background: rgba(34, 168, 73, 0.12);
@@ -1635,6 +1644,20 @@
 .cart-empty p {
   color: var(--ink-soft);
   margin-bottom: 1.6rem;
+}
+.cart-empty__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+.cart-empty__secondary {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--blue-600);
+}
+.cart-empty__secondary:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 900px) {
@@ -1836,6 +1859,25 @@
   font-size: 0.82rem;
   color: var(--muted);
   margin: -0.4rem 0 0.9rem;
+}
+.upload-required-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin: 0 0 1.2rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--secondary-dark);
+  border-radius: var(--r-sm);
+  background: var(--blue-50, #f1f6fd);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.upload-required-note svg {
+  flex: none;
+  margin-top: 0.15rem;
+  font-size: 1.05rem;
+  color: var(--secondary-dark);
 }
 
 /* ---- "file received" intro card (checkout step 3 / consultation) ---- */
