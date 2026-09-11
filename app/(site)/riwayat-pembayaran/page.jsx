@@ -16,6 +16,7 @@ import {
 import Page from '../../../components/layout/Page'
 import PageHero from '../../../components/sections/PageHero'
 import Reveal from '../../../components/ui/Reveal'
+import FileListDropdown from '../../../components/ui/FileListDropdown'
 import { formatIDR } from '../../../data/format'
 import { useAuth, loginUrl } from '../../../context/auth'
 import { api } from '../../../lib/api'
@@ -277,28 +278,22 @@ export default function PaymentHistory() {
                           {it.qty > 1 && <em> × {it.qty}</em>}
                         </span>
                         <span className="pay-record__item-right">
-                          {it.has_result && (
-                            <a
-                              className="pay-record__result"
-                              href={api.orders.resultUrl(o.order_no, it.id)}
-                              target="_blank"
-                              rel="noopener"
-                              title={it.result_original_name}
-                            >
-                              <FiDownload /> Hasil Siap — Unduh
-                            </a>
-                          )}
-                          {it.has_attachment && (
-                            <a
-                              className="pay-record__attachment"
-                              href={api.orders.attachmentUrl(o.order_no, it.id)}
-                              target="_blank"
-                              rel="noopener"
-                              title={it.attachment_original_name}
-                            >
-                              <FiUploadCloud /> File Saya
-                            </a>
-                          )}
+                          <FileListDropdown
+                            label="Hasil"
+                            singleLabel="Hasil Siap — Unduh"
+                            icon={FiDownload}
+                            files={it.results}
+                            getUrl={(r) => api.orders.resultFileUrl(o.order_no, it.id, r.id)}
+                            className="pay-record__result"
+                          />
+                          <FileListDropdown
+                            label="File Saya"
+                            singleLabel="File Saya"
+                            icon={FiUploadCloud}
+                            files={it.attachments}
+                            getUrl={(a) => api.orders.attachmentFileUrl(o.order_no, it.id, a.id)}
+                            className="pay-record__attachment"
+                          />
                           <b>{it.line_total != null ? formatIDR(it.line_total) : '—'}</b>
                         </span>
                       </li>
