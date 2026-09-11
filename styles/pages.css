@@ -2461,6 +2461,55 @@
 .pay-record__result:hover {
   background: rgba(34, 168, 73, 0.2);
 }
+/* .pay-record__result / .pay-record__attachment render on a <button> when
+   FileListDropdown collapses several files into one trigger — reset the
+   native button chrome so it still looks like the plain-link pill. */
+.file-dropdown__trigger {
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+.file-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+.file-dropdown__chevron {
+  font-size: 0.75em;
+  opacity: 0.7;
+}
+.file-dropdown__panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 20;
+  min-width: 220px;
+  max-width: min(320px, 90vw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-card);
+  padding: 0.4rem;
+}
+.file-dropdown__item {
+  display: block;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--r-sm);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.15s ease;
+}
+.file-dropdown__item:hover {
+  background: var(--soft);
+  color: var(--ink);
+}
 .pay-record__cancel {
   margin-top: 0.9rem;
 }
