@@ -207,7 +207,7 @@ export default function PaymentHistory() {
       setCachedOrder(updated)
       router.push(`/bayar?order_no=${encodeURIComponent(order.order_no)}`)
     } catch (e) {
-      setQuoteError(e.message || 'Gagal menyetujui penawaran.')
+      setQuoteError({ orderNo: order.order_no, message: e.message || 'Gagal menyetujui penawaran.' })
       setAcceptingNo(null)
     }
   }
@@ -218,7 +218,7 @@ export default function PaymentHistory() {
     try {
       await api.orders.declineQuote(orderNo)
     } catch (e) {
-      setQuoteError(e.message || 'Gagal membatalkan permintaan.')
+      setQuoteError({ orderNo, message: e.message || 'Gagal membatalkan permintaan.' })
     } finally {
       await refreshOrders()
       setDecliningNo(null)
@@ -307,7 +307,9 @@ export default function PaymentHistory() {
                     </span>
                   </div>
 
-                  {quoteError && <p className="auth-modal__error">{quoteError}</p>}
+                  {quoteError?.orderNo === o.order_no && (
+                    <p className="auth-modal__error">{quoteError.message}</p>
+                  )}
 
                   {o.status === 'awaiting_quote' && (
                     <div className="pay-record__quote-actions">
