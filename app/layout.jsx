@@ -7,14 +7,14 @@ import NotificationToast from '../components/ui/NotificationToast'
 import { SITE_URL } from '../data/site'
 
 const DESCRIPTION =
-  'ECC — Best To Solution. Solusi tepat untuk karya ilmiah berkualitas: Turnitin/parafrase, olah data statistik, publikasi jurnal, proofreading, media interaktif, dan penerbitan buku.'
+  'ECC — Best Solution. Solusi tepat untuk karya ilmiah berkualitas: Turnitin/parafrase, olah data statistik, publikasi jurnal, proofreading, media interaktif, dan penerbitan buku.'
 
 export const metadata = {
   // metadataBase bikin semua URL relatif di bawah (canonical, og:image)
   // dirender jadi absolut — Google dan WhatsApp mengabaikan yang relatif.
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'ECC — Best To Solution',
+    default: 'ECC — Best Solution',
     template: '%s — ECC',
   },
   description: DESCRIPTION,
@@ -26,16 +26,16 @@ export const metadata = {
   },
   openGraph: {
     type: 'website',
-    siteName: 'ECC — Best To Solution',
+    siteName: 'ECC — Best Solution',
     locale: 'id_ID',
     url: '/',
-    title: 'ECC — Best To Solution',
+    title: 'ECC — Best Solution',
     description: DESCRIPTION,
     images: [{ url: '/images/logo.png', width: 288, height: 192 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ECC — Best To Solution',
+    title: 'ECC — Best Solution',
     description: DESCRIPTION,
   },
   // Verifikasi Google Search Console lewat meta tag. Isi kodenya dari

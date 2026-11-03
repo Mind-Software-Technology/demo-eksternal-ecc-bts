@@ -18,7 +18,7 @@ export const API_URL = (
 
 export const site = {
   brand: 'ECC',
-  brandFull: 'Best To Solution',
+  brandFull: 'Best Solution',
   motto: ['Bersinergi', 'Berbagi', 'Berprestasi'],
   tagline: 'Solusi Tepat untuk Karya Ilmiah Berkualitas',
   valueWords: ['Profesional', 'Cepat', 'Terpercaya'],
@@ -84,7 +84,7 @@ export const getNavItems = (config) => {
  * belum sampai, gagal dihubungi, atau field-nya dikosongkan.
  */
 export const HERO_FALLBACK = {
-  eyebrow: 'ECC • Best To Solution',
+  eyebrow: 'ECC • Best Solution',
   title: 'Temukan Layanan untuk',
   title_highlight: 'Karya Ilmiah Anda',
   subtitle:
