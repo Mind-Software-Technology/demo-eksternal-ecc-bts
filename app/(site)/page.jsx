@@ -13,7 +13,7 @@ import CTABand from '../../components/sections/CTABand'
 
 export default function Home() {
   return (
-    <Page title="ECC — Best To Solution">
+    <Page title="ECC — Best Solution">
       <Hero />
       <Marquee />
       <CategoryBar />
